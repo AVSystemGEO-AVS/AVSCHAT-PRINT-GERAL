@@ -3,191 +3,164 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>IMPRIMIR CONVERSA</title>
+  <title>IMPRIMIR</title>
 </head>
 <body>
 
 <script src="https://fileschat.sfo2.cdn.digitaloceanspaces.com/public/libs/wlclient.js"></script>
 
 <script>
-  const API_BASE = 'https://api.avschat.com.br/core/v2/api';
-  const API_SCRIPTS = 'https://api.avschat.com.br/core/v2/api/scripts/delaied';
-
-  const SCRIPT_HOJE    = '697ba2909e27ed3154f13698';
-  const SCRIPT_PERIODO = '697d0409f45542f5cf863707';
-
-  const KEY_DATA_IMPRIMIR = 'data_imprimir';
-
-  function extractIds(atendimento) {
-    return {
-      chatId:
-        atendimento?.chat?.codigo ||
-        atendimento?.attendanceId ||
-        atendimento?.id ||
-        null,
-
-      contactId:
-        atendimento?.contato?.codigo ||
-        atendimento?.contact?.id ||
-        null,
-
-      token:
-        atendimento?.canal?.token ||
-        atendimento?.channel?.token ||
-        atendimento?.token ||
-        null
-    };
+  function getParam(name) {
+    try { return new URL(window.location.href).searchParams.get(name); }
+    catch (_) { return null; }
   }
 
-  function headers(token) {
-    return {
-      "access-token": token,
-      "Content-Type": "application/json",
-      "Accept": "application/json"
-    };
-  }
+  function renderModal() {
+    document.body.innerHTML = `
+      <div>
+        <strong>IMPRIMIR</strong>
+        <br><br>
 
-  async function fetchJSON(url, options) {
-    const res = await fetch(url, options);
-    const txt = await res.text().catch(() => "");
-    if (!res.ok) throw new Error(txt || res.status);
-    if (!txt.trim()) return {};
-    try { return JSON.parse(txt); } catch { return {}; }
-  }
+        <button id="btn-hoje">HOJE</button>
+        <button id="btn-anteriores">DIAS ANTERIORES</button>
 
-  async function setDataImprimir(contactId, hdrs, value) {
-    return fetchJSON(`${API_BASE}/contacts/${contactId}/set-attributes`, {
-      method: "POST",
-      headers: hdrs,
-      body: JSON.stringify([
-        {
-          key: KEY_DATA_IMPRIMIR,
-          value,
-          description: "IMPRIMIR"
-        }
-      ])
-    });
-  }
+        <div id="box-data" style="display:none; margin-top:12px;">
+          <div>DIA ESCOLHIDO (DD/MM/AA)</div>
+          <input id="inp-data" placeholder="00/00/00" maxlength="8">
+          <div id="msg" style="margin-top:8px;"></div>
+          <div style="margin-top:10px;">
+            <button id="btn-enviar">ENVIAR</button>
+            <button id="btn-cancelar">CANCELAR</button>
+          </div>
+        </div>
 
-  async function executaScript(scriptId, hdrs) {
-    return fetchJSON(API_SCRIPTS, {
-      method: "POST",
-      headers: hdrs,
-      body: JSON.stringify({
-        description: "IMPRIMIR CONVERSA",
-        scriptId,
-        amountDelay: 3,
-        typeDelay: 0,
-        context: {
-          channelId: "@canal.token",
-          organizationId: "@empresa.codigo",
-          attendanceId: "@chat.codigo",
-          contactId: "@contato.codigo",
-          userId: "@usuario.codigo",
-          sectorId: "@setor.codigo",
-          variablesContext: []
-        }
-      })
-    });
-  }
+        <div id="box-hoje" style="display:none; margin-top:12px;">
+          <div style="margin-top:10px;">
+            <button id="btn-confirmar-hoje">ENVIAR</button>
+            <button id="btn-cancelar-hoje">CANCELAR</button>
+          </div>
+        </div>
+      </div>
+    `;
 
+    const btnHoje = document.getElementById("btn-hoje");
+    const btnAnt = document.getElementById("btn-anteriores");
 
-  function abrirMenuImprimir(atendimento) {
-    const ids = extractIds(atendimento);
+    const boxData = document.getElementById("box-data");
+    const inpData = document.getElementById("inp-data");
+    const msgEl = document.getElementById("msg");
 
-    if (!ids.chatId || !ids.contactId || !ids.token) {
-      return window.WlExtension.alert({
-        message: "Não foi possível identificar chat, contato ou token.",
-        variant: "error"
-      });
+    const boxHoje = document.getElementById("box-hoje");
+
+    function setMsg(t) { if (msgEl) msgEl.textContent = t || ""; }
+
+    function closeCancel() {
+      window.WlExtension.closeModal({ cancelled: true });
     }
 
-    const hdrs = headers(ids.token);
+    function normalizeDDMMAA(v) {
+    
+      let s = String(v || "").replace(/[^\d]/g, "").slice(0, 6);
+      if (s.length > 2) s = s.slice(0,2) + "/" + s.slice(2);
+      if (s.length > 5) s = s.slice(0,5) + "/" + s.slice(5);
+      return s;
+    }
 
-    window.WlExtension.confirmDialog({
-      title: "IMPRIMIR CONVERSA",
-      text:
-        "Selecione o tipo de impressão:\n\n" +
-        "[ 1 ] HOJE\n" +
-        "[ 2 ] DO DIA\n" +
-        "[ 3 ] PERÍODO",
-      callback: async (ok) => {
-        if (!ok) return;
+    function parseDDMMAA(v) {
+      const m = String(v || "").trim().match(/^(\d{2})\/(\d{2})\/(\d{2})$/);
+      if (!m) return { ok:false, error:"Use 00/00/00 (DD/MM/AA)." };
 
-        const opcao = String(prompt("Digite 1, 2 ou 3:", "1") || "").trim();
+      const dd = Number(m[1]);
+      const mm = Number(m[2]);
+      const aa = Number(m[3]);
+      const yyyy = 2000 + aa;
 
-        try {
+      const d = new Date(yyyy, mm - 1, dd);
+      const ok =
+        d.getFullYear() === yyyy &&
+        d.getMonth() === (mm - 1) &&
+        d.getDate() === dd;
 
-          if (opcao === "1") {
-            const value = `CHATID=${ids.chatId};TIPO=HOJE`;
+      if (!ok) return { ok:false, error:"Data inválida." };
 
-            await setDataImprimir(ids.contactId, hdrs, value);
-            await executaScript(SCRIPT_HOJE, hdrs);
+      return { ok:true, short:`${m[1]}/${m[2]}/${m[3]}`, full:`${m[1]}/${m[2]}/${yyyy}` };
+    }
 
-            return window.WlExtension.alert({
-              message: "IMPRIMIR (HOJE) enviado.",
-              variant: "success"
-            });
+    inpData.addEventListener("input", () => {
+      inpData.value = normalizeDDMMAA(inpData.value);
+      setMsg("");
+    });
+
+ 
+    btnHoje.onclick = () => {
+      boxData.style.display = "none";
+      boxHoje.style.display = "block";
+    };
+
+  
+    btnAnt.onclick = () => {
+      boxHoje.style.display = "none";
+      boxData.style.display = "block";
+      setTimeout(() => inpData.focus(), 10);
+    };
+
+    document.getElementById("btn-cancelar").onclick = closeCancel;
+    document.getElementById("btn-cancelar-hoje").onclick = closeCancel;
+
+    document.getElementById("btn-confirmar-hoje").onclick = () => {
+      window.WlExtension.closeModal({ action: "hoje" });
+    };
+
+    document.getElementById("btn-enviar").onclick = () => {
+      const p = parseDDMMAA(inpData.value);
+      if (!p.ok) {
+        setMsg(p.error);
+        return;
+      }
+      window.WlExtension.closeModal({
+        action: "anteriores",
+        data: p.short,   
+        dataFull: p.full 
+      });
+    };
+  }
+
+
+  function initExtension() {
+    window.WlExtension.initialize({
+      buttons: {
+        "attendance-view": [
+          {
+            icon_url: "https://img.icons8.com/material-sharp/15/000000/print.png",
+            text: "IMPRIMIR",
+            callback: (atendimento) => {
+             
+              const modalUrl = `@EXTENSION_URL?mode=modal`;
+
+              window.WlExtension.modal({
+                title: "IMPRIMIR",
+                url: modalUrl,
+                maxWidth: "450px",
+                height: "280px",
+                callback: (ret) => {
+                  if (!ret || ret.cancelled) return;
+
+                                    if (ret.action === "hoje") {
+                    window.WlExtension.alert({ message: "Selecionado: HOJE", variant: "success" });
+                  } else if (ret.action === "anteriores") {
+                    window.WlExtension.alert({ message: `Selecionado: DIAS ANTERIORES (${ret.data})`, variant: "success" });
+                  }
+                }
+              });
+            }
           }
-
-          if (opcao === "2") {
-            const dia = prompt("Informe a data (00/00/0000):", "00/00/0000");
-
-            const value =
-              `CHATID=${ids.chatId};TIPO=DIA;DATA=${String(dia || "")}`;
-
-            await setDataImprimir(ids.contactId, hdrs, value);
-            await executaScript(SCRIPT_PERIODO, hdrs);
-
-            return window.WlExtension.alert({
-              message: "IMPRIMIR (DO DIA) enviado.",
-              variant: "success"
-            });
-          }
-
-          if (opcao === "3") {
-            const de  = prompt("Do dia (00/00/0000):", "00/00/0000");
-            const ate = prompt("Até dia (00/00/0000):", "00/00/0000");
-
-            const value =
-              `CHATID=${ids.chatId};TIPO=PERIODO;DE=${String(de || "")};ATE=${String(ate || "")}`;
-
-            await setDataImprimir(ids.contactId, hdrs, value);
-            await executaScript(SCRIPT_PERIODO, hdrs);
-
-            return window.WlExtension.alert({
-              message: "IMPRIMIR (PERÍODO) enviado.",
-              variant: "success"
-            });
-          }
-
-          return window.WlExtension.alert({
-            message: "Opção inválida.",
-            variant: "error"
-          });
-
-        } catch (e) {
-          console.error(e);
-          return window.WlExtension.alert({
-            message: "Erro ao enviar solicitação.",
-            variant: "error"
-          });
-        }
+        ]
       }
     });
   }
 
-  window.WlExtension.initialize({
-    buttons: {
-      "attendance-view": [
-        {
-          icon_url: "https://img.icons8.com/material-sharp/15/000000/print.png",
-          text: "Imprimir",
-          callback: abrirMenuImprimir
-        }
-      ]
-    }
-  });
+  if (getParam("mode") === "modal") renderModal();
+  else initExtension();
 </script>
 
 </body>
