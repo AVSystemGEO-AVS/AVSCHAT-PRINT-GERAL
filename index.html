@@ -126,38 +126,46 @@
   }
 
 
-  function initExtension() {
-    window.WlExtension.initialize({
-      buttons: {
-        "attendance-view": [
-          {
-            icon_url: "https://img.icons8.com/material-sharp/15/000000/print.png",
-            text: "IMPRIMIR",
-            callback: (atendimento) => {
-             
-              const modalUrl = `@EXTENSION_URL?mode=modal`;
+  window.WlExtension.initialize({
+  buttons: {
+    "attendance-view": [
+      {
+        icon_url: "https://img.icons8.com/material-sharp/15/000000/print.png",
+        text: "IMPRIMIR",
+        callback: (atendimento) => {
 
-              window.WlExtension.modal({
-                title: "IMPRIMIR",
-                url: modalUrl,
-                maxWidth: "450px",
-                height: "280px",
-                callback: (ret) => {
-                  if (!ret || ret.cancelled) return;
+          const modalUrl = "https://avsystemgeo-avs.github.io/AVSCHAT-PRINT-GERAL/?mode=modal";
 
-                                    if (ret.action === "hoje") {
-                    window.WlExtension.alert({ message: "Selecionado: HOJE", variant: "success" });
-                  } else if (ret.action === "anteriores") {
-                    window.WlExtension.alert({ message: `Selecionado: DIAS ANTERIORES (${ret.data})`, variant: "success" });
-                  }
-                }
-              });
+          window.WlExtension.modal({
+            title: "IMPRIMIR",
+            url: modalUrl,
+            maxWidth: "450px",
+            height: "280px",
+            callback: (ret) => {
+              if (!ret || ret.cancelled) return;
+
+              // por enquanto só para validar o template
+              if (ret.action === "hoje") {
+                window.WlExtension.alert({
+                  message: "Selecionado: HOJE",
+                  variant: "success"
+                });
+              }
+
+              if (ret.action === "anteriores") {
+                window.WlExtension.alert({
+                  message: `Selecionado: DIAS ANTERIORES (${ret.data})`,
+                  variant: "success"
+                });
+              }
             }
-          }
-        ]
+          });
+        }
       }
-    });
+    ]
   }
+});
+
 
   if (getParam("mode") === "modal") renderModal();
   else initExtension();
