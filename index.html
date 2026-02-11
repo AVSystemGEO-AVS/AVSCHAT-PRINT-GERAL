@@ -11,12 +11,60 @@
 
 <script>
 
+const TOKEN_AVS = "TOKEN_AQUI"; // <-- cole o token aqui
+const SCRIPT_ID_IMPRIMIR_HOJE = "697ba2909e27ed3154f13698";
+
+const headersAVS = {
+  "access-token": TOKEN_AVS,
+  "Content-Type": "application/json",
+  "Accept": "application/json",
+};
+
 function getParam(name) {
   try {
     return new URL(window.location.href).searchParams.get(name);
   } catch (_) {
     return null;
   }
+}
+
+function getAllParams() {
+  try {
+    const u = new URL(window.location.href);
+    return Object.fromEntries(u.searchParams.entries());
+  } catch (_) {
+    return {};
+  }
+}
+
+function executarScriptHojeFront(ctx) {
+  const body = {
+    description: "IMPRIMIR - HOJE",
+    scriptId: SCRIPT_ID_IMPRIMIR_HOJE,
+    amountDelay: 0,
+    typeDelay: 0,
+    context: {
+      channelId: ctx.channelId,
+      organizationId: ctx.organizationId,
+      attendanceId: ctx.attendanceId,
+      contactId: ctx.contactId,
+      userId: ctx.userId,
+      sectorId: ctx.sectorId,
+      variablesContext: []
+    }
+  };
+
+  return fetch("https://api.avschat.com.br/core/v2/api/scripts/delaied", {
+    method: "POST",
+    headers: headersAVS,
+    body: JSON.stringify(body)
+  }).then(async (r) => {
+    if (!r.ok) {
+      const t = await r.text().catch(() => "");
+      throw new Error("Falha ao executar script: " + r.status + " " + t);
+    }
+    return r.json().catch(() => ({}));
+  });
 }
 
 function renderModal() {
@@ -160,12 +208,14 @@ function renderModal() {
   btnHoje.onclick = () => {
     boxData.style.display = "none";
     boxHoje.style.display = "block";
+    setMsg("");
   };
 
   btnAnt.onclick = () => {
     boxHoje.style.display = "none";
     boxData.style.display = "block";
     setTimeout(() => inpData.focus(), 50);
+    setMsg("");
   };
 
   inpData.addEventListener("input", () => {
@@ -176,20 +226,44 @@ function renderModal() {
   document.getElementById("btn-cancelar").onclick = closeCancel;
   document.getElementById("btn-cancelar-hoje").onclick = closeCancel;
 
-  document.getElementById("btn-confirmar-hoje").onclick = () => {
-    window.WlExtension.closeModal({ action: "hoje" });
-  };
-
-  document.getElementById("btn-enviar").onclick = () => {
-    const p = parseDDMMAA(inpData.value);
-    if (!p.ok) return setMsg(p.error);
-
-    window.WlExtension.closeModal({
-      action: "anteriores",
-      data: p.data
-    });
-  };
-}
+  document.getElementById("btn-confirmar-hoje").onclick = async () => {
+      setMsg("");
+  
+      const params = getAllParams();
+      const ctx = {
+        channelId: params.channelId || "",
+        organizationId: params.organizationId || "",
+        attendanceId: params.attendanceId || "",
+        contactId: params.contactId || "",
+        userId: params.userId || "",
+        sectorId: params.sectorId || ""
+      };
+  
+      const btn = document.getElementById("btn-confirmar-hoje");
+      btn.disabled = true;
+      btn.textContent = "AGUARDE...";
+  
+      try {
+        await executarScriptHojeFront(ctx);
+        window.WlExtension.closeModal({ action: "hoje", ok: true });
+      } catch (e) {
+        console.error(e);
+        setMsg("Erro ao acionar impressão (HOJE). Verifique token/IDs.");
+        btn.disabled = false;
+        btn.textContent = "CONFIRMAR";
+      }
+    }
+  
+    document.getElementById("btn-enviar").onclick = () => {
+      const p = parseDDMMAA(inpData.value);
+      if (!p.ok) return setMsg(p.error);
+  
+      window.WlExtension.closeModal({
+        action: "anteriores",
+        data: p.data
+      });
+    };
+  }
 
 function initExtension() {
   window.WlExtension.initialize({
@@ -198,16 +272,29 @@ function initExtension() {
         {
           icon_url: "https://img.icons8.com/material-sharp/15/000000/print.png",
           text: "IMPRIMIR",
-          callback: () => {
+          callback: (atendimento) => {
+            console.log("attendance-view payload:", atendimento);
+
+            const qs = new URLSearchParams({
+              mode: "modal",
+              attendanceId: atendimento?.atendimentoId ?? "",
+              contactId: atendimento?.contactId ?? atendimento?.contact?.id ?? "",
+              channelId: atendimento?.channelId ?? atendimento?.channel?.id ?? "",
+              organizationId: atendimento?.organizationId ?? atendimento?.organization?.id ?? "",
+              userId: atendimento?.userId ?? atendimento?.user?.id ?? "",
+              sectorId: atendimento?.sectorId ?? atendimento?.sector?.id ?? ""
+            });
 
             const modalUrl =
-              "https://avsysgeo-mariaeduarda.github.io/IMPRIMIR_AVS_CHAT/?mode=modal";
+              "https://avsysgeo-mariaeduarda.github.io/IMPRIMIR_AVS_CHAT/?" +
+              qs.toString() +
+              "&v=" + Date.now();
 
             window.WlExtension.modal({
               title: "IMPRIMIR",
               url: modalUrl,
               maxWidth: "450px",
-              height: "280px",
+              height: "300px",
               callback: (ret) => {
                 if (!ret || ret.cancelled) return;
 
