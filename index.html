@@ -10,8 +10,7 @@
 <script src="https://fileschat.sfo2.cdn.digitaloceanspaces.com/public/libs/wlclient.js"></script>
 
 <script>
-
-const TESTE = "656893d34b695ee8e936875d";
+const TESTE = "TOKEN_AQUI"; // <-- coloque o token aqui (evite deixar real no GitHub)
 const SCRIPT_ID_IMPRIMIR_HOJE = "697ba2909e27ed3154f13698";
 
 const headersAVS = {
@@ -75,21 +74,18 @@ function renderModal() {
         font-size: 14px;
         color: #000;
       }
-      
       .container{
         padding: 16px;
         width: 100%;
         max-width: 350px;
         margin: 0 auto; 
       }
-      
       .actions {
         display: flex;
         gap: 16px;
         margin-bottom: 16px;
         justify-content: flex-start;
       }
-
       button {
         padding: 8px 8px;
         width: 160px;
@@ -100,18 +96,13 @@ function renderModal() {
         border-radius: 6px;
         font-size: 14px;
       }
-
-      .box {
-        margin-top: 16px;
-      }
-
+      .box { margin-top: 16px; }
       .row {
         display: flex;
         gap: 16px;
         margin-top: 16px;
         justify-content: flex-start;
       }
-
       input {
         width: 314px;
         padding: 8px 10px;
@@ -119,22 +110,20 @@ function renderModal() {
         border-radius: 6px;
         font-size: 14px;
       }
-
       input:focus {
         outline: none;
         border-color: #192d3e;
         box-shadow: 0 0 0 2px rgba(25, 45, 62, 0.15);
       }
-      
       .msg {
         margin-top: 8px;
         color: #b00020;
         font-size: 13px;
+        min-height: 16px;
       }
     </style>
 
     <div class="container">
-
       <div class="actions">
         <button id="btn-hoje" type="button">HOJE</button>
         <button id="btn-anteriores" type="button">DIAS ANTERIORES</button>
@@ -149,9 +138,8 @@ function renderModal() {
       </div>
 
       <div id="box-data" class="box" style="display:none;">
-
-          <p>Insira dia escolhido (DD/MM/AA)</p>
-          <input id="inp-data" placeholder="00/00/00" maxlength="8">
+        <p>Insira dia escolhido (DD/MM/AA)</p>
+        <input id="inp-data" placeholder="00/00/00" maxlength="8">
 
         <div class="row">
           <button id="btn-enviar" type="button">CONFIRMAR</button>
@@ -160,7 +148,6 @@ function renderModal() {
 
         <div id="msg" class="msg"></div>
       </div>
-
     </div>
   `;
 
@@ -171,9 +158,7 @@ function renderModal() {
   const inpData = document.getElementById("inp-data");
   const msgEl = document.getElementById("msg");
 
-  function setMsg(t) {
-    msgEl.textContent = t || "";
-  }
+  function setMsg(t) { msgEl.textContent = t || ""; }
 
   function closeCancel() {
     window.WlExtension.closeModal({ cancelled: true });
@@ -194,14 +179,9 @@ function renderModal() {
     const yyyy = 2000 + aa;
     const d = new Date(yyyy, mm - 1, dd);
 
-    if (
-      d.getFullYear() !== yyyy ||
-      d.getMonth() !== mm - 1 ||
-      d.getDate() !== dd
-    ) {
+    if (d.getFullYear() !== yyyy || d.getMonth() !== mm - 1 || d.getDate() !== dd) {
       return { ok:false, error:"Data inválida" };
     }
-
     return { ok:true, data:`${m[1]}/${m[2]}/${m[3]}` };
   }
 
@@ -225,10 +205,10 @@ function renderModal() {
 
   document.getElementById("btn-cancelar").onclick = closeCancel;
   document.getElementById("btn-cancelar-hoje").onclick = closeCancel;
-  
+
   document.getElementById("btn-confirmar-hoje").onclick = async () => {
     setMsg("");
-  
+
     const params = getAllParams();
     const ctx = {
       channelId: params.channelId || "",
@@ -238,18 +218,17 @@ function renderModal() {
       userId: params.userId || "",
       sectorId: params.sectorId || ""
     };
-  
+
     console.log("PARAMS modal:", params);
     console.log("CTX script:", ctx);
-  
+
     const btn = document.getElementById("btn-confirmar-hoje");
     btn.disabled = true;
     btn.textContent = "AGUARDE...";
-  
+
     try {
       const resp = await executarScriptHojeFront(ctx);
       console.log("RESP API:", resp);
-  
       window.WlExtension.closeModal({ action: "hoje", ok: true, resp });
     } catch (e) {
       console.error("ERRO API:", e);
@@ -258,78 +237,76 @@ function renderModal() {
       btn.textContent = "CONFIRMAR";
     }
   };
-  
+
   document.getElementById("btn-enviar").onclick = () => {
     const p = parseDDMMAA(inpData.value);
     if (!p.ok) return setMsg(p.error);
-  
-    window.WlExtension.closeModal({
-      action: "anteriores",
-      data: p.data
-    });
+
+    window.WlExtension.closeModal({ action: "anteriores", data: p.data });
   };
-    
-  function initExtension() {
-    window.WlExtension.initialize({
-      buttons: {
-        "attendance-view": [
-          {
-            icon_url: "https://img.icons8.com/material-sharp/15/000000/print.png",
-            text: "IMPRIMIR",
-            callback: (atendimento) => {
-              console.log("attendance-view payload:", atendimento);
-  
-              const qs = new URLSearchParams({
-                mode: "modal",
-                attendanceId: atendimento?.atendimentoId ?? "",
-                contactId: atendimento?.contactId ?? atendimento?.contact?.id ?? "",
-                channelId: atendimento?.channelId ?? atendimento?.channel?.id ?? "",
-                organizationId: atendimento?.organizationId ?? atendimento?.organization?.id ?? "",
-                userId: atendimento?.userId ?? atendimento?.user?.id ?? "",
-                sectorId: atendimento?.sectorId ?? atendimento?.sector?.id ?? ""
-              });
-  
-              const modalUrl =
-                "https://avsysgeo-mariaeduarda.github.io/IMPRIMIR_AVS_CHAT/?" +
-                qs.toString() +
-                "&v=" + Date.now();
-  
-              window.WlExtension.modal({
-                title: "IMPRIMIR",
-                url: modalUrl,
-                maxWidth: "450px",
-                height: "300px",
-                callback: (ret) => {
-                  if (!ret || ret.cancelled) return;
-  
-                  if (ret.action === "hoje") {
-                    window.WlExtension.alert({
-                      message: "Selecionado: HOJE",
-                      variant: "success"
-                    });
-                  }
-  
-                  if (ret.action === "anteriores") {
-                    window.WlExtension.alert({
-                      message: "Selecionado: " + ret.data,
-                      variant: "success"
-                    });
-                  }
+}
+
+function initExtension() {
+  window.WlExtension.initialize({
+    buttons: {
+      "attendance-view": [
+        {
+          icon_url: "https://img.icons8.com/material-sharp/15/000000/print.png",
+          text: "IMPRIMIR",
+          callback: (atendimento) => {
+            console.log("attendance-view payload:", atendimento);
+
+            const qs = new URLSearchParams({
+              mode: "modal",
+              attendanceId: atendimento?.atendimentoId ?? "",
+              contactId: atendimento?.contactId ?? atendimento?.contact?.id ?? "",
+              channelId: atendimento?.channelId ?? atendimento?.channel?.id ?? "",
+              organizationId: atendimento?.organizationId ?? atendimento?.organization?.id ?? "",
+              userId: atendimento?.userId ?? atendimento?.user?.id ?? "",
+              sectorId: atendimento?.sectorId ?? atendimento?.sector?.id ?? ""
+            });
+
+            const modalUrl =
+              "https://avsysgeo-mariaeduarda.github.io/IMPRIMIR_AVS_CHAT/?" +
+              qs.toString() +
+              "&v=" + Date.now();
+
+            window.WlExtension.modal({
+              title: "IMPRIMIR",
+              url: modalUrl,
+              maxWidth: "450px",
+              height: "300px",
+              callback: (ret) => {
+                if (!ret || ret.cancelled) return;
+
+                if (ret.action === "hoje") {
+                  window.WlExtension.alert({
+                    message: ret.ok ? "Script HOJE acionado!" : "Falhou ao acionar Script HOJE",
+                    variant: ret.ok ? "success" : "error"
+                  });
                 }
-              });
-            }
+
+                if (ret.action === "anteriores") {
+                  window.WlExtension.alert({
+                    message: "Selecionado: " + ret.data,
+                    variant: "success"
+                  });
+                }
+              }
+            });
           }
-        ]
-      }
-    });
-  }
-  
-  if (getParam("mode") === "modal") {
-    renderModal();
-  } else {
-    initExtension();
-  }
-  </script>
+        }
+      ]
+    }
+  });
+}
+
+if (getParam("mode") === "modal") {
+  renderModal();
+} else {
+  initExtension();
+}
+</script>
 
 </body>
 </html>
