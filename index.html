@@ -11,11 +11,11 @@
 
 <script>
 
-const TOKEN_AVS = "656893d34b695ee8e936875d";
+const TESTE = "656893d34b695ee8e936875d";
 const SCRIPT_ID_IMPRIMIR_HOJE = "697ba2909e27ed3154f13698";
 
 const headersAVS = {
-  "access-token": TOKEN_AVS,
+  "access-token": TESTE,
   "Content-Type": "application/json",
   "Accept": "application/json",
 };
@@ -319,7 +319,6 @@ function initExtension() {
     }
   });
 }
-
 
 if (getParam("mode") === "modal") {
   renderModal();
