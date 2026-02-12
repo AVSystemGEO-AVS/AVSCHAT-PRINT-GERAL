@@ -225,107 +225,111 @@ function renderModal() {
 
   document.getElementById("btn-cancelar").onclick = closeCancel;
   document.getElementById("btn-cancelar-hoje").onclick = closeCancel;
-
+  
   document.getElementById("btn-confirmar-hoje").onclick = async () => {
-      setMsg("");
+    setMsg("");
   
-      const params = getAllParams();
-      const ctx = {
-        channelId: params.channelId || "",
-        organizationId: params.organizationId || "",
-        attendanceId: params.attendanceId || "",
-        contactId: params.contactId || "",
-        userId: params.userId || "",
-        sectorId: params.sectorId || ""
-      };
-  
-      const btn = document.getElementById("btn-confirmar-hoje");
-      btn.disabled = true;
-      btn.textContent = "AGUARDE...";
-  
-      try {
-        await executarScriptHojeFront(ctx);
-        window.WlExtension.closeModal({ action: "hoje", ok: true });
-      } catch (e) {
-        console.error(e);
-        setMsg("Erro ao acionar impressão (HOJE). Verifique token/IDs.");
-        btn.disabled = false;
-        btn.textContent = "CONFIRMAR";
-      }
-    }
-  
-    document.getElementById("btn-enviar").onclick = () => {
-      const p = parseDDMMAA(inpData.value);
-      if (!p.ok) return setMsg(p.error);
-  
-      window.WlExtension.closeModal({
-        action: "anteriores",
-        data: p.data
-      });
+    const params = getAllParams();
+    const ctx = {
+      channelId: params.channelId || "",
+      organizationId: params.organizationId || "",
+      attendanceId: params.attendanceId || "",
+      contactId: params.contactId || "",
+      userId: params.userId || "",
+      sectorId: params.sectorId || ""
     };
-  }
-
-function initExtension() {
-  window.WlExtension.initialize({
-    buttons: {
-      "attendance-view": [
-        {
-          icon_url: "https://img.icons8.com/material-sharp/15/000000/print.png",
-          text: "IMPRIMIR",
-          callback: (atendimento) => {
-            console.log("attendance-view payload:", atendimento);
-
-            const qs = new URLSearchParams({
-              mode: "modal",
-              attendanceId: atendimento?.atendimentoId ?? "",
-              contactId: atendimento?.contactId ?? atendimento?.contact?.id ?? "",
-              channelId: atendimento?.channelId ?? atendimento?.channel?.id ?? "",
-              organizationId: atendimento?.organizationId ?? atendimento?.organization?.id ?? "",
-              userId: atendimento?.userId ?? atendimento?.user?.id ?? "",
-              sectorId: atendimento?.sectorId ?? atendimento?.sector?.id ?? ""
-            });
-
-            const modalUrl =
-              "https://avsysgeo-mariaeduarda.github.io/IMPRIMIR_AVS_CHAT/?" +
-              qs.toString() +
-              "&v=" + Date.now();
-
-            window.WlExtension.modal({
-              title: "IMPRIMIR",
-              url: modalUrl,
-              maxWidth: "450px",
-              height: "300px",
-              callback: (ret) => {
-                if (!ret || ret.cancelled) return;
-
-                if (ret.action === "hoje") {
-                  window.WlExtension.alert({
-                    message: "Selecionado: HOJE",
-                    variant: "success"
-                  });
-                }
-
-                if (ret.action === "anteriores") {
-                  window.WlExtension.alert({
-                    message: "Selecionado: " + ret.data,
-                    variant: "success"
-                  });
-                }
-              }
-            });
-          }
-        }
-      ]
+  
+    console.log("PARAMS modal:", params);
+    console.log("CTX script:", ctx);
+  
+    const btn = document.getElementById("btn-confirmar-hoje");
+    btn.disabled = true;
+    btn.textContent = "AGUARDE...";
+  
+    try {
+      const resp = await executarScriptHojeFront(ctx);
+      console.log("RESP API:", resp);
+  
+      window.WlExtension.closeModal({ action: "hoje", ok: true, resp });
+    } catch (e) {
+      console.error("ERRO API:", e);
+      setMsg("Erro ao acionar impressão (HOJE). Verifique token/IDs/CORS.");
+      btn.disabled = false;
+      btn.textContent = "CONFIRMAR";
     }
-  });
-}
-
-if (getParam("mode") === "modal") {
-  renderModal();
-} else {
-  initExtension();
-}
-</script>
+  };
+  
+  document.getElementById("btn-enviar").onclick = () => {
+    const p = parseDDMMAA(inpData.value);
+    if (!p.ok) return setMsg(p.error);
+  
+    window.WlExtension.closeModal({
+      action: "anteriores",
+      data: p.data
+    });
+  };
+    
+  function initExtension() {
+    window.WlExtension.initialize({
+      buttons: {
+        "attendance-view": [
+          {
+            icon_url: "https://img.icons8.com/material-sharp/15/000000/print.png",
+            text: "IMPRIMIR",
+            callback: (atendimento) => {
+              console.log("attendance-view payload:", atendimento);
+  
+              const qs = new URLSearchParams({
+                mode: "modal",
+                attendanceId: atendimento?.atendimentoId ?? "",
+                contactId: atendimento?.contactId ?? atendimento?.contact?.id ?? "",
+                channelId: atendimento?.channelId ?? atendimento?.channel?.id ?? "",
+                organizationId: atendimento?.organizationId ?? atendimento?.organization?.id ?? "",
+                userId: atendimento?.userId ?? atendimento?.user?.id ?? "",
+                sectorId: atendimento?.sectorId ?? atendimento?.sector?.id ?? ""
+              });
+  
+              const modalUrl =
+                "https://avsysgeo-mariaeduarda.github.io/IMPRIMIR_AVS_CHAT/?" +
+                qs.toString() +
+                "&v=" + Date.now();
+  
+              window.WlExtension.modal({
+                title: "IMPRIMIR",
+                url: modalUrl,
+                maxWidth: "450px",
+                height: "300px",
+                callback: (ret) => {
+                  if (!ret || ret.cancelled) return;
+  
+                  if (ret.action === "hoje") {
+                    window.WlExtension.alert({
+                      message: "Selecionado: HOJE",
+                      variant: "success"
+                    });
+                  }
+  
+                  if (ret.action === "anteriores") {
+                    window.WlExtension.alert({
+                      message: "Selecionado: " + ret.data,
+                      variant: "success"
+                    });
+                  }
+                }
+              });
+            }
+          }
+        ]
+      }
+    });
+  }
+  
+  if (getParam("mode") === "modal") {
+    renderModal();
+  } else {
+    initExtension();
+  }
+  </script>
 
 </body>
 </html>
