@@ -27,15 +27,100 @@ function getAllParams() {
   }
 }
 
-/** Template do modal (evita quebrar fácil) */
-function modalTemplate() {
-  return `
+async function chamarN8n(payload) {
+  let r;
+  let txt = "";
+
+  try {
+    r = await fetch(N8N_WEBHOOK_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    txt = await r.text().catch(() => "");
+  } catch (e) {
+    throw new Error("Falha de rede/CORS ao chamar n8n. Detalhe: " + (e?.message || e));
+  }
+
+  if (!r.ok) {
+    throw new Error(`N8N HTTP ${r.status}. Resposta: ${txt}`);
+  }
+
+  let data;
+  try {
+    data = JSON.parse(txt);
+  } catch (_) {
+    throw new Error("N8N não retornou JSON válido. Resposta bruta: " + txt);
+  }
+
+  if (!data || typeof data.resposta !== "string") {
+    throw new Error("N8N não retornou {resposta: string}. JSON: " + JSON.stringify(data));
+  }
+
+  return data.resposta;
+}
+
+function imprimirTexto(resposta, titulo) {
+  const safeTitle = titulo || "Histórico";
+  const safeText = String(resposta || "")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  const html = `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>${safeTitle}</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; padding: 24px; }
+    h1 { font-size: 18px; margin: 0 0 12px; }
+    pre { white-space: pre-wrap; word-wrap: break-word; font-size: 12.5px; line-height: 1.45; }
+  </style>
+</head>
+<body>
+  <h1>${safeTitle}</h1>
+  <pre>${safeText}</pre>
+</body>
+</html>
+  `.trim();
+
+  const iframe = document.createElement("iframe");
+  iframe.style.position = "fixed";
+  iframe.style.right = "0";
+  iframe.style.bottom = "0";
+  iframe.style.width = "0";
+  iframe.style.height = "0";
+  iframe.style.border = "0";
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentWindow.document;
+  doc.open();
+  doc.write(html);
+  doc.close();
+
+  iframe.onload = () => {
+    try {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+    } finally {
+      setTimeout(() => iframe.remove(), 700);
+    }
+  };
+}
+
+function renderModal() {
+  document.body.innerHTML = `
     <style>
       body {
         font-family: Arial, Helvetica, sans-serif;
         font-size: 14px;
         color: #000;
-        margin: 0;
       }
       .container{
         padding: 16px;
@@ -76,7 +161,6 @@ function modalTemplate() {
         border: 1px solid #000;
         border-radius: 6px;
         font-size: 14px;
-        box-sizing: border-box;
       }
       input:focus {
         outline: none;
@@ -84,10 +168,11 @@ function modalTemplate() {
         box-shadow: 0 0 0 2px rgba(25, 45, 62, 0.15);
       }
       .msg {
-        margin-top: 8px;
+        margin-top: 10px;
         color: #b00020;
         font-size: 13px;
-        min-height: 16px;
+        min-height: 18px;
+        white-space: pre-wrap;
       }
     </style>
 
@@ -103,6 +188,7 @@ function modalTemplate() {
           <button id="btn-confirmar-hoje" type="button">CONFIRMAR</button>
           <button id="btn-cancelar-hoje" type="button">CANCELAR</button>
         </div>
+        <div id="msg-hoje" class="msg"></div>
       </div>
 
       <div id="box-data" class="box" style="display:none;">
@@ -118,92 +204,6 @@ function modalTemplate() {
       </div>
     </div>
   `;
-}
-
-function normalizeDDMMAA(v) {
-  let s = String(v || "").replace(/[^\d]/g, "").slice(0, 6);
-  if (s.length > 2) s = s.slice(0,2) + "/" + s.slice(2);
-  if (s.length > 5) s = s.slice(0,5) + "/" + s.slice(5);
-  return s;
-}
-
-function parseDDMMAA(v) {
-  const m = String(v || "").match(/^(\d{2})\/(\d{2})\/(\d{2})$/);
-  if (!m) return { ok:false, error:"Use 00/00/00 (DD/MM/AA)" };
-
-  const dd = +m[1], mm = +m[2], aa = +m[3];
-  const yyyy = 2000 + aa;
-  const d = new Date(yyyy, mm - 1, dd);
-
-  if (d.getFullYear() !== yyyy || d.getMonth() !== mm - 1 || d.getDate() !== dd) {
-    return { ok:false, error:"Data inválida" };
-  }
-  return { ok:true, data:`${m[1]}/${m[2]}/${m[3]}` };
-}
-
-async function chamarN8n(payload) {
-  const r = await fetch(N8N_WEBHOOK_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Accept": "application/json" },
-    body: JSON.stringify(payload)
-  });
-
-  const txt = await r.text().catch(() => "");
-  if (!r.ok) throw new Error("N8N HTTP " + r.status + " - " + txt);
-
-  let data;
-  try { data = JSON.parse(txt); }
-  catch (_) { data = {}; }
-
-  if (!data || typeof data.resposta !== "string") {
-    throw new Error("N8N não retornou { resposta: \"...\" }. Retorno: " + txt);
-  }
-  return data.resposta;
-}
-
-function imprimirTexto(resposta, titulo) {
-  const w = window.open("", "_blank");
-  if (!w) {
-    throw new Error("Popup bloqueado. Permita popups para imprimir.");
-  }
-
-  const safeTitle = titulo || "Histórico";
-  const safeText = String(resposta || "")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-
-  w.document.open();
-  w.document.write(`
-    <!DOCTYPE html>
-    <html lang="pt-BR">
-      <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-        <title>${safeTitle}</title>
-        <style>
-          body { font-family: Arial, Helvetica, sans-serif; padding: 24px; }
-          h1 { font-size: 18px; margin: 0 0 12px; }
-          pre { white-space: pre-wrap; word-wrap: break-word; font-size: 12.5px; line-height: 1.45; }
-        </style>
-      </head>
-      <body>
-        <h1>${safeTitle}</h1>
-        <pre>${safeText}</pre>
-        <script>
-          window.onload = function () {
-            window.focus();
-            window.print();
-            setTimeout(() => window.close(), 300);
-          }
-        <\/script>
-      </body>
-    </html>
-  `);
-  w.document.close();
-}
-
-function renderModal() {
-  document.body.innerHTML = modalTemplate();
 
   const btnHoje = document.getElementById("btn-hoje");
   const btnAnt = document.getElementById("btn-anteriores");
@@ -211,17 +211,41 @@ function renderModal() {
   const boxData = document.getElementById("box-data");
   const inpData = document.getElementById("inp-data");
   const msgEl = document.getElementById("msg");
+  const msgHojeEl = document.getElementById("msg-hoje");
 
   function setMsg(t) { msgEl.textContent = t || ""; }
+  function setMsgHoje(t) { msgHojeEl.textContent = t || ""; }
 
   function closeCancel() {
     window.WlExtension.closeModal({ cancelled: true });
+  }
+
+  function normalizeDDMMAA(v) {
+    let s = String(v || "").replace(/[^\d]/g, "").slice(0, 6);
+    if (s.length > 2) s = s.slice(0,2) + "/" + s.slice(2);
+    if (s.length > 5) s = s.slice(0,5) + "/" + s.slice(5);
+    return s;
+  }
+
+  function parseDDMMAA(v) {
+    const m = String(v || "").match(/^(\d{2})\/(\d{2})\/(\d{2})$/);
+    if (!m) return { ok:false, error:"Use 00/00/00 (DD/MM/AA)" };
+
+    const dd = +m[1], mm = +m[2], aa = +m[3];
+    const yyyy = 2000 + aa;
+    const d = new Date(yyyy, mm - 1, dd);
+
+    if (d.getFullYear() !== yyyy || d.getMonth() !== mm - 1 || d.getDate() !== dd) {
+      return { ok:false, error:"Data inválida" };
+    }
+    return { ok:true, data:`${m[1]}/${m[2]}/${m[3]}` };
   }
 
   btnHoje.onclick = () => {
     boxData.style.display = "none";
     boxHoje.style.display = "block";
     setMsg("");
+    setMsgHoje("");
   };
 
   btnAnt.onclick = () => {
@@ -229,6 +253,7 @@ function renderModal() {
     boxData.style.display = "block";
     setTimeout(() => inpData.focus(), 50);
     setMsg("");
+    setMsgHoje("");
   };
 
   inpData.addEventListener("input", () => {
@@ -238,40 +263,43 @@ function renderModal() {
 
   document.getElementById("btn-cancelar").onclick = closeCancel;
   document.getElementById("btn-cancelar-hoje").onclick = closeCancel;
+
   document.getElementById("btn-confirmar-hoje").onclick = async () => {
-    setMsg("");
+    setMsgHoje("");
 
     const params = getAllParams();
-    const ctx = {
-      channelId: params.channelId || "",
-      organizationId: params.organizationId || "",
+    const payload = {
+      tipo: "hoje",
       attendanceId: params.attendanceId || "",
       contactId: params.contactId || "",
+      channelId: params.channelId || "",
+      organizationId: params.organizationId || "",
       userId: params.userId || "",
       sectorId: params.sectorId || ""
     };
 
     const btn = document.getElementById("btn-confirmar-hoje");
     btn.disabled = true;
+    const oldText = btn.textContent;
     btn.textContent = "AGUARDE...";
 
     try {
-      const resposta = await chamarN8n({
-        acao: "hoje",
-        ctx
-      });
+      console.log("PAYLOAD N8N (HOJE):", payload);
+      const resposta = await chamarN8n(payload);
+      console.log("RESPOSTA N8N:", resposta);
 
-      imprimirTexto(resposta, "Histórico de Hoje");
+      imprimirTexto(resposta, "Histórico de hoje");
+
       window.WlExtension.closeModal({ action: "hoje", ok: true });
     } catch (e) {
-      console.error(e);
-      setMsg("Erro ao imprimir (HOJE). Verifique n8n/CORS/retorno {resposta}.");
+      console.error("ERRO IMPRIMIR HOJE:", e);
+      setMsgHoje(String(e?.message || e));
       btn.disabled = false;
-      btn.textContent = "CONFIRMAR";
+      btn.textContent = oldText;
     }
   };
 
-  document.getElementById("btn-enviar").onclick = async () => {
+  document.getElementById("btn-enviar").onclick = () => {
     const p = parseDDMMAA(inpData.value);
     if (!p.ok) return setMsg(p.error);
 
@@ -287,6 +315,8 @@ function initExtension() {
           icon_url: "https://img.icons8.com/material-sharp/15/000000/print.png",
           text: "IMPRIMIR",
           callback: (atendimento) => {
+            console.log("attendance-view payload:", atendimento);
+
             const qs = new URLSearchParams({
               mode: "modal",
               attendanceId: atendimento?.atendimentoId ?? "",
@@ -312,7 +342,7 @@ function initExtension() {
 
                 if (ret.action === "hoje") {
                   window.WlExtension.alert({
-                    message: ret.ok ? "Impressão gerada!" : "Falhou ao imprimir",
+                    message: ret.ok ? "Impressão enviada!" : "Falhou ao imprimir",
                     variant: ret.ok ? "success" : "error"
                   });
                 }
