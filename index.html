@@ -10,21 +10,12 @@
 <script src="https://fileschat.sfo2.cdn.digitaloceanspaces.com/public/libs/wlclient.js"></script>
 
 <script>
-const TESTE = "TOKEN_AQUI"; // <-- coloque o token aqui (evite deixar real no GitHub)
-const SCRIPT_ID_IMPRIMIR_HOJE = "697ba2909e27ed3154f13698";
-
-const headersAVS = {
-  "access-token": TESTE,
-  "Content-Type": "application/json",
-  "Accept": "application/json",
-};
+  
+const N8N_WEBHOOK_URL = "https://n8n.srv1157562.hstgr.cloud/webhook-test/imprimir_historico";
 
 function getParam(name) {
-  try {
-    return new URL(window.location.href).searchParams.get(name);
-  } catch (_) {
-    return null;
-  }
+  try { return new URL(window.location.href).searchParams.get(name); }
+  catch (_) { return null; }
 }
 
 function getAllParams() {
@@ -36,49 +27,21 @@ function getAllParams() {
   }
 }
 
-function executarScriptHojeFront(ctx) {
-  const body = {
-    description: "IMPRIMIR - HOJE",
-    scriptId: SCRIPT_ID_IMPRIMIR_HOJE,
-    amountDelay: 0,
-    typeDelay: 0,
-    context: {
-      channelId: ctx.channelId,
-      organizationId: ctx.organizationId,
-      attendanceId: ctx.attendanceId,
-      contactId: ctx.contactId,
-      userId: ctx.userId,
-      sectorId: ctx.sectorId,
-      variablesContext: []
-    }
-  };
-
-  return fetch("https://api.avschat.com.br/core/v2/api/scripts/delaied", {
-    method: "POST",
-    headers: headersAVS,
-    body: JSON.stringify(body)
-  }).then(async (r) => {
-    if (!r.ok) {
-      const t = await r.text().catch(() => "");
-      throw new Error("Falha ao executar script: " + r.status + " " + t);
-    }
-    return r.json().catch(() => ({}));
-  });
-}
-
-function renderModal() {
-  document.body.innerHTML = `
+/** Template do modal (evita quebrar fácil) */
+function modalTemplate() {
+  return `
     <style>
       body {
         font-family: Arial, Helvetica, sans-serif;
         font-size: 14px;
         color: #000;
+        margin: 0;
       }
       .container{
         padding: 16px;
         width: 100%;
         max-width: 350px;
-        margin: 0 auto; 
+        margin: 0 auto;
       }
       .actions {
         display: flex;
@@ -96,6 +59,10 @@ function renderModal() {
         border-radius: 6px;
         font-size: 14px;
       }
+      button:disabled{
+        opacity: .7;
+        cursor: not-allowed;
+      }
       .box { margin-top: 16px; }
       .row {
         display: flex;
@@ -109,6 +76,7 @@ function renderModal() {
         border: 1px solid #000;
         border-radius: 6px;
         font-size: 14px;
+        box-sizing: border-box;
       }
       input:focus {
         outline: none;
@@ -150,6 +118,92 @@ function renderModal() {
       </div>
     </div>
   `;
+}
+
+function normalizeDDMMAA(v) {
+  let s = String(v || "").replace(/[^\d]/g, "").slice(0, 6);
+  if (s.length > 2) s = s.slice(0,2) + "/" + s.slice(2);
+  if (s.length > 5) s = s.slice(0,5) + "/" + s.slice(5);
+  return s;
+}
+
+function parseDDMMAA(v) {
+  const m = String(v || "").match(/^(\d{2})\/(\d{2})\/(\d{2})$/);
+  if (!m) return { ok:false, error:"Use 00/00/00 (DD/MM/AA)" };
+
+  const dd = +m[1], mm = +m[2], aa = +m[3];
+  const yyyy = 2000 + aa;
+  const d = new Date(yyyy, mm - 1, dd);
+
+  if (d.getFullYear() !== yyyy || d.getMonth() !== mm - 1 || d.getDate() !== dd) {
+    return { ok:false, error:"Data inválida" };
+  }
+  return { ok:true, data:`${m[1]}/${m[2]}/${m[3]}` };
+}
+
+async function chamarN8n(payload) {
+  const r = await fetch(N8N_WEBHOOK_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Accept": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  const txt = await r.text().catch(() => "");
+  if (!r.ok) throw new Error("N8N HTTP " + r.status + " - " + txt);
+
+  let data;
+  try { data = JSON.parse(txt); }
+  catch (_) { data = {}; }
+
+  if (!data || typeof data.resposta !== "string") {
+    throw new Error("N8N não retornou { resposta: \"...\" }. Retorno: " + txt);
+  }
+  return data.resposta;
+}
+
+function imprimirTexto(resposta, titulo) {
+  const w = window.open("", "_blank");
+  if (!w) {
+    throw new Error("Popup bloqueado. Permita popups para imprimir.");
+  }
+
+  const safeTitle = titulo || "Histórico";
+  const safeText = String(resposta || "")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  w.document.open();
+  w.document.write(`
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <title>${safeTitle}</title>
+        <style>
+          body { font-family: Arial, Helvetica, sans-serif; padding: 24px; }
+          h1 { font-size: 18px; margin: 0 0 12px; }
+          pre { white-space: pre-wrap; word-wrap: break-word; font-size: 12.5px; line-height: 1.45; }
+        </style>
+      </head>
+      <body>
+        <h1>${safeTitle}</h1>
+        <pre>${safeText}</pre>
+        <script>
+          window.onload = function () {
+            window.focus();
+            window.print();
+            setTimeout(() => window.close(), 300);
+          }
+        <\/script>
+      </body>
+    </html>
+  `);
+  w.document.close();
+}
+
+function renderModal() {
+  document.body.innerHTML = modalTemplate();
 
   const btnHoje = document.getElementById("btn-hoje");
   const btnAnt = document.getElementById("btn-anteriores");
@@ -162,27 +216,6 @@ function renderModal() {
 
   function closeCancel() {
     window.WlExtension.closeModal({ cancelled: true });
-  }
-
-  function normalizeDDMMAA(v) {
-    let s = String(v || "").replace(/[^\d]/g, "").slice(0, 6);
-    if (s.length > 2) s = s.slice(0,2) + "/" + s.slice(2);
-    if (s.length > 5) s = s.slice(0,5) + "/" + s.slice(5);
-    return s;
-  }
-
-  function parseDDMMAA(v) {
-    const m = String(v || "").match(/^(\d{2})\/(\d{2})\/(\d{2})$/);
-    if (!m) return { ok:false, error:"Use 00/00/00 (DD/MM/AA)" };
-
-    const dd = +m[1], mm = +m[2], aa = +m[3];
-    const yyyy = 2000 + aa;
-    const d = new Date(yyyy, mm - 1, dd);
-
-    if (d.getFullYear() !== yyyy || d.getMonth() !== mm - 1 || d.getDate() !== dd) {
-      return { ok:false, error:"Data inválida" };
-    }
-    return { ok:true, data:`${m[1]}/${m[2]}/${m[3]}` };
   }
 
   btnHoje.onclick = () => {
@@ -205,7 +238,6 @@ function renderModal() {
 
   document.getElementById("btn-cancelar").onclick = closeCancel;
   document.getElementById("btn-cancelar-hoje").onclick = closeCancel;
-
   document.getElementById("btn-confirmar-hoje").onclick = async () => {
     setMsg("");
 
@@ -219,26 +251,27 @@ function renderModal() {
       sectorId: params.sectorId || ""
     };
 
-    console.log("PARAMS modal:", params);
-    console.log("CTX script:", ctx);
-
     const btn = document.getElementById("btn-confirmar-hoje");
     btn.disabled = true;
     btn.textContent = "AGUARDE...";
 
     try {
-      const resp = await executarScriptHojeFront(ctx);
-      console.log("RESP API:", resp);
-      window.WlExtension.closeModal({ action: "hoje", ok: true, resp });
+      const resposta = await chamarN8n({
+        acao: "hoje",
+        ctx
+      });
+
+      imprimirTexto(resposta, "Histórico de Hoje");
+      window.WlExtension.closeModal({ action: "hoje", ok: true });
     } catch (e) {
-      console.error("ERRO API:", e);
-      setMsg("Erro ao acionar impressão (HOJE). Verifique token/IDs/CORS.");
+      console.error(e);
+      setMsg("Erro ao imprimir (HOJE). Verifique n8n/CORS/retorno {resposta}.");
       btn.disabled = false;
       btn.textContent = "CONFIRMAR";
     }
   };
 
-  document.getElementById("btn-enviar").onclick = () => {
+  document.getElementById("btn-enviar").onclick = async () => {
     const p = parseDDMMAA(inpData.value);
     if (!p.ok) return setMsg(p.error);
 
@@ -254,8 +287,6 @@ function initExtension() {
           icon_url: "https://img.icons8.com/material-sharp/15/000000/print.png",
           text: "IMPRIMIR",
           callback: (atendimento) => {
-            console.log("attendance-view payload:", atendimento);
-
             const qs = new URLSearchParams({
               mode: "modal",
               attendanceId: atendimento?.atendimentoId ?? "",
@@ -281,7 +312,7 @@ function initExtension() {
 
                 if (ret.action === "hoje") {
                   window.WlExtension.alert({
-                    message: ret.ok ? "Script HOJE acionado!" : "Falhou ao acionar Script HOJE",
+                    message: ret.ok ? "Impressão gerada!" : "Falhou ao imprimir",
                     variant: ret.ok ? "success" : "error"
                   });
                 }
