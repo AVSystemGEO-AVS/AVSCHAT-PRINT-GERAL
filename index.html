@@ -11,6 +11,7 @@
 
 <script>
 const N8N_WEBHOOK_URL = "https://n8n.srv1157562.hstgr.cloud/webhook/imprimir_historico";
+
 const numero = "@contato.numero";
 const chatId = "@chat.codigo";
 const tokenAVS = "@canal.token";
@@ -21,7 +22,8 @@ function getParam(name) {
 }
 
 async function chamarN8n(payload) {
-  console.log("[IMPRIMIR] POST N8N:", N8N_WEBHOOK_URL, payload);
+  console.log("[IMPRIMIR] POST N8N:", N8N_WEBHOOK_URL);
+  console.log("[IMPRIMIR] PAYLOAD:", payload);
 
   let resp;
   try {
@@ -121,13 +123,6 @@ function renderModal() {
       }
       .box { margin-top: 16px; }
       .row { display: flex; gap: 16px; margin-top: 16px; justify-content: flex-start; }
-      input {
-        width: 314px;
-        padding: 8px 10px;
-        border: 1px solid #000;
-        border-radius: 6px;
-        font-size: 14px;
-      }
       .msg { margin-top: 10px; color: #b00020; font-size: 13px; min-height: 18px; white-space: pre-wrap; }
     </style>
 
@@ -147,13 +142,7 @@ function renderModal() {
       </div>
 
       <div id="box-data" class="box" style="display:none;">
-        <p>Insira dia escolhido (DD/MM/AA)</p>
-        <input id="inp-data" placeholder="00/00/00" maxlength="8">
-        <div class="row">
-          <button id="btn-enviar" type="button">CONFIRMAR</button>
-          <button id="btn-cancelar" type="button">CANCELAR</button>
-        </div>
-        <div id="msg" class="msg"></div>
+        <p>(Depois fazemos os dias anteriores)</p>
       </div>
     </div>
   `;
@@ -162,70 +151,28 @@ function renderModal() {
   const btnAnt = document.getElementById("btn-anteriores");
   const boxHoje = document.getElementById("box-hoje");
   const boxData = document.getElementById("box-data");
-  const inpData = document.getElementById("inp-data");
-  const msgEl = document.getElementById("msg");
   const msgHojeEl = document.getElementById("msg-hoje");
 
-  function setMsg(t) { msgEl.textContent = t || ""; }
   function setMsgHoje(t) { msgHojeEl.textContent = t || ""; }
-
-  function closeCancel() {
-    window.WlExtension.closeModal({ cancelled: true });
-  }
-
-  function normalizeDDMMAA(v) {
-    let s = String(v || "").replace(/[^\d]/g, "").slice(0, 6);
-    if (s.length > 2) s = s.slice(0,2) + "/" + s.slice(2);
-    if (s.length > 5) s = s.slice(0,5) + "/" + s.slice(5);
-    return s;
-  }
-
-  function parseDDMMAA(v) {
-    const m = String(v || "").match(/^(\d{2})\/(\d{2})\/(\d{2})$/);
-    if (!m) return { ok:false, error:"Use 00/00/00 (DD/MM/AA)" };
-
-    const dd = +m[1], mm = +m[2], aa = +m[3];
-    const yyyy = 2000 + aa;
-    const d = new Date(yyyy, mm - 1, dd);
-
-    if (d.getFullYear() !== yyyy || d.getMonth() !== mm - 1 || d.getDate() !== dd) {
-      return { ok:false, error:"Data inválida" };
-    }
-    return { ok:true, data:`${m[1]}/${m[2]}/${m[3]}` };
-  }
 
   btnHoje.onclick = () => {
     boxData.style.display = "none";
     boxHoje.style.display = "block";
-    setMsg("");
     setMsgHoje("");
   };
 
   btnAnt.onclick = () => {
     boxHoje.style.display = "none";
     boxData.style.display = "block";
-    setTimeout(() => inpData.focus(), 50);
-    setMsg("");
     setMsgHoje("");
   };
 
-  inpData.addEventListener("input", () => {
-    inpData.value = normalizeDDMMAA(inpData.value);
-    setMsg("");
-  });
-
-  document.getElementById("btn-cancelar").onclick = closeCancel;
-  document.getElementById("btn-cancelar-hoje").onclick = closeCancel;
+  document.getElementById("btn-cancelar-hoje").onclick = () => {
+    window.WlExtension.closeModal({ cancelled: true });
+  };
 
   document.getElementById("btn-confirmar-hoje").onclick = () => {
     window.WlExtension.closeModal({ action: "hoje" });
-  };
-
-  document.getElementById("btn-enviar").onclick = () => {
-    const p = parseDDMMAA(inpData.value);
-    if (!p.ok) return setMsg(p.error);
-
-    window.WlExtension.closeModal({ action: "anteriores", data: p.data });
   };
 }
 
@@ -237,29 +184,29 @@ function initExtension() {
           icon_url: "https://img.icons8.com/material-sharp/15/000000/print.png",
           text: "IMPRIMIR",
           callback: (atendimento) => {
-            const qs = new URLSearchParams({ mode: "modal" });
-            const modalUrlBase = "https://avsysgeo-mariaeduarda.github.io/IMPRIMIR_AVS_CHAT/";
-            const modalUrl = modalUrlBase + "?" + qs.toString() + "&v=" + Date.now();
+
+            const modalUrl = "https://avsysgeo-mariaeduarda.github.io/IMPRIMIR_AVS_CHAT/?mode=modal&v=" + Date.now();
 
             window.WlExtension.modal({
               title: "IMPRIMIR",
               url: modalUrl,
               maxWidth: "450px",
               height: "300px",
+
               callback: async (ret) => {
                 if (!ret || ret.cancelled) return;
 
                 if (ret.action === "hoje") {
                   const payload = {
                     tipo: "hoje",
-                  
-                    attendanceId: params.attendanceId || "",
-                    contactId: params.contactId || "",
-                    channelId: params.channelId || "",
-                    organizationId: params.organizationId || "",
-                    userId: params.userId || "",
-                    sectorId: params.sectorId || "",
-                  
+
+                    attendanceId: atendimento?.atendimentoId ?? "",
+                    contactId: atendimento?.contactId ?? atendimento?.contact?.id ?? "",
+                    channelId: atendimento?.channelId ?? atendimento?.channel?.id ?? "",
+                    organizationId: atendimento?.organizationId ?? atendimento?.organization?.id ?? "",
+                    userId: atendimento?.userId ?? atendimento?.user?.id ?? "",
+                    sectorId: atendimento?.sectorId ?? atendimento?.sector?.id ?? "",
+
                     numero: numero,
                     chatId: chatId,
                     tokenAVS: tokenAVS
@@ -279,13 +226,6 @@ function initExtension() {
                       variant: "error"
                     });
                   }
-                }
-
-                if (ret.action === "anteriores") {
-                  window.WlExtension.alert({
-                    message: "Selecionado: " + ret.data,
-                    variant: "success"
-                  });
                 }
               }
             });
