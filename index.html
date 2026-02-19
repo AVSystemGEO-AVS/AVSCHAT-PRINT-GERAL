@@ -16,14 +16,6 @@ function getParam(name) {
   try { return new URL(window.location.href).searchParams.get(name); }
   catch (_) { return null; }
 }
-function getAllParams() {
-  try {
-    const u = new URL(window.location.href);
-    return Object.fromEntries(u.searchParams.entries());
-  } catch (_) {
-    return {};
-  }
-}
 
 async function chamarN8n(payload) {
   console.log("[IMPRIMIR] POST N8N:", N8N_WEBHOOK_URL, payload);
@@ -32,7 +24,6 @@ async function chamarN8n(payload) {
   try {
     resp = await fetch(N8N_WEBHOOK_URL, {
       method: "POST",
-      mode: "cors",
       cache: "no-store",
       headers: {
         "Content-Type": "application/json",
@@ -41,21 +32,17 @@ async function chamarN8n(payload) {
       body: JSON.stringify(payload),
     });
   } catch (e) {
-    throw new Error("Fetch bloqueado/sem rede (CORS/CSP/WebView). Detalhe: " + (e?.message || e));
+    throw new Error("Falha de rede/CORS ao chamar n8n. Detalhe: " + (e?.message || e));
   }
 
   const raw = await resp.text().catch(() => "");
   console.log("[IMPRIMIR] N8N status:", resp.status, "raw:", raw);
 
-  if (!resp.ok) {
-    throw new Error(`N8N HTTP ${resp.status}. Resposta: ${raw}`);
-  }
+  if (!resp.ok) throw new Error(`N8N HTTP ${resp.status}. Resposta: ${raw}`);
 
   let data;
   try { data = JSON.parse(raw); }
-  catch (_) {
-    throw new Error("N8N não retornou JSON válido. Resposta bruta: " + raw);
-  }
+  catch (_) { throw new Error("N8N não retornou JSON válido. Resposta: " + raw); }
 
   if (!data || typeof data.resposta !== "string") {
     throw new Error("N8N não retornou {resposta: string}. JSON: " + JSON.stringify(data));
@@ -129,7 +116,6 @@ function renderModal() {
         border-radius: 6px;
         font-size: 14px;
       }
-      button:disabled { opacity: .7; cursor: not-allowed; }
       .box { margin-top: 16px; }
       .row { display: flex; gap: 16px; margin-top: 16px; justify-content: flex-start; }
       input {
@@ -190,12 +176,15 @@ function renderModal() {
     if (s.length > 5) s = s.slice(0,5) + "/" + s.slice(5);
     return s;
   }
+
   function parseDDMMAA(v) {
     const m = String(v || "").match(/^(\d{2})\/(\d{2})\/(\d{2})$/);
     if (!m) return { ok:false, error:"Use 00/00/00 (DD/MM/AA)" };
+
     const dd = +m[1], mm = +m[2], aa = +m[3];
     const yyyy = 2000 + aa;
     const d = new Date(yyyy, mm - 1, dd);
+
     if (d.getFullYear() !== yyyy || d.getMonth() !== mm - 1 || d.getDate() !== dd) {
       return { ok:false, error:"Data inválida" };
     }
@@ -225,49 +214,14 @@ function renderModal() {
   document.getElementById("btn-cancelar").onclick = closeCancel;
   document.getElementById("btn-cancelar-hoje").onclick = closeCancel;
 
-  document.getElementById("btn-confirmar-hoje").onclick = async () => {
-    setMsgHoje("");
-
-    const params = getAllParams();
-    const payload = {
-      tipo: "hoje",
-      attendanceId: params.attendanceId || "",
-      contactId: params.contactId || "",
-      channelId: params.channelId || "",
-      organizationId: params.organizationId || "",
-      userId: params.userId || "",
-      sectorId: params.sectorId || ""
-    };
-
-    const btn = document.getElementById("btn-confirmar-hoje");
-    const oldText = btn.textContent;
-    btn.disabled = true;
-    btn.textContent = "AGUARDE...";
-
-    try {
-      const resposta = await chamarN8n(payload);
-
-      imprimirTexto(resposta, "Histórico de hoje");
-
-      window.WlExtension.closeModal({ action: "hoje", ok: true });
-    } catch (e) {
-      const msg = String(e?.message || e);
-      console.error("[IMPRIMIR] ERRO HOJE:", e);
-
-      setMsgHoje(msg);
-
-      try {
-        window.WlExtension.closeModal({ action: "hoje", ok: false, error: msg });
-      } catch (_) {}
-
-      btn.disabled = false;
-      btn.textContent = oldText;
-    }
+  document.getElementById("btn-confirmar-hoje").onclick = () => {
+    window.WlExtension.closeModal({ action: "hoje" });
   };
 
   document.getElementById("btn-enviar").onclick = () => {
     const p = parseDDMMAA(inpData.value);
     if (!p.ok) return setMsg(p.error);
+
     window.WlExtension.closeModal({ action: "anteriores", data: p.data });
   };
 }
@@ -280,16 +234,7 @@ function initExtension() {
           icon_url: "https://img.icons8.com/material-sharp/15/000000/print.png",
           text: "IMPRIMIR",
           callback: (atendimento) => {
-            const qs = new URLSearchParams({
-              mode: "modal",
-              attendanceId: atendimento?.atendimentoId ?? "",
-              contactId: atendimento?.contactId ?? atendimento?.contact?.id ?? "",
-              channelId: atendimento?.channelId ?? atendimento?.channel?.id ?? "",
-              organizationId: atendimento?.organizationId ?? atendimento?.organization?.id ?? "",
-              userId: atendimento?.userId ?? atendimento?.user?.id ?? "",
-              sectorId: atendimento?.sectorId ?? atendimento?.sector?.id ?? ""
-            });
-
+            const qs = new URLSearchParams({ mode: "modal" });
             const modalUrlBase = "https://avsysgeo-mariaeduarda.github.io/IMPRIMIR_AVS_CHAT/";
             const modalUrl = modalUrlBase + "?" + qs.toString() + "&v=" + Date.now();
 
@@ -298,14 +243,31 @@ function initExtension() {
               url: modalUrl,
               maxWidth: "450px",
               height: "300px",
-              callback: (ret) => {
+              callback: async (ret) => {
                 if (!ret || ret.cancelled) return;
 
                 if (ret.action === "hoje") {
-                  window.WlExtension.alert({
-                    message: ret.ok ? "Impressão enviada!" : ("Falhou ao imprimir\n" + (ret.error || "")),
-                    variant: ret.ok ? "success" : "error"
-                  });
+                  const payload = {
+                    tipo: "hoje",
+                    attendanceId: atendimento?.atendimentoId ?? "",
+                    channelId: atendimento?.channelId ?? atendimento?.channel?.id ?? "",
+                    organizationId: atendimento?.organizationId ?? atendimento?.organization?.id ?? ""
+                  };
+
+                  try {
+                    const resposta = await chamarN8n(payload);
+                    imprimirTexto(resposta, "Histórico de hoje");
+
+                    window.WlExtension.alert({
+                      message: "Impressão enviada!",
+                      variant: "success"
+                    });
+                  } catch (e) {
+                    window.WlExtension.alert({
+                      message: "Falhou ao imprimir: " + String(e?.message || e),
+                      variant: "error"
+                    });
+                  }
                 }
 
                 if (ret.action === "anteriores") {
