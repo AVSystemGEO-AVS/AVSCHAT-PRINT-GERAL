@@ -11,6 +11,9 @@
 
 <script>
 const N8N_WEBHOOK_URL = "https://n8n.srv1157562.hstgr.cloud/webhook/imprimir_historico";
+const numero = "@contato.numero";
+const chatId = "@chat.codigo";
+const tokenAVS = "@canal.token";
 
 function getParam(name) {
   try { return new URL(window.location.href).searchParams.get(name); }
@@ -249,9 +252,17 @@ function initExtension() {
                 if (ret.action === "hoje") {
                   const payload = {
                     tipo: "hoje",
-                    attendanceId: atendimento?.atendimentoId ?? "",
-                    channelId: atendimento?.channelId ?? atendimento?.channel?.id ?? "",
-                    organizationId: atendimento?.organizationId ?? atendimento?.organization?.id ?? ""
+                  
+                    attendanceId: params.attendanceId || "",
+                    contactId: params.contactId || "",
+                    channelId: params.channelId || "",
+                    organizationId: params.organizationId || "",
+                    userId: params.userId || "",
+                    sectorId: params.sectorId || "",
+                  
+                    numero: numero,
+                    chatId: chatId,
+                    tokenAVS: tokenAVS
                   };
 
                   try {
