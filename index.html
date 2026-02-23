@@ -49,11 +49,18 @@
     try { data = JSON.parse(raw); }
     catch (_) { throw new Error("N8N não retornou JSON válido. Resposta: " + raw); }
 
-    if (!data || typeof data.resposta !== "string") {
-      throw new Error("N8N não retornou {resposta: string}. JSON: " + JSON.stringify(data));
+    if (Array.isArray(data)) {
+      if (data.length > 0 && typeof data[0].resposta === "string") {
+        return data[0].resposta;
+      }
+      throw new Error("N8N retornou array, mas sem {resposta: string}. JSON: " + JSON.stringify(data));
     }
-
-    return data.resposta;
+    
+    if (data && typeof data.resposta === "string") {
+      return data.resposta;
+    }
+    
+    throw new Error("N8N não retornou formato esperado. JSON: " + JSON.stringify(data));
   }
 
   function imprimirTexto(resposta, titulo) {
