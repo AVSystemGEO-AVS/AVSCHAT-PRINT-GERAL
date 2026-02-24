@@ -11,6 +11,7 @@
 
 <script>
   const N8N_WEBHOOK_URL = "https://n8n.srv1157562.hstgr.cloud/webhook/imprimir_historico";
+  const N8N_WEBHOOK_URL_ESPECIFICO = "https://n8n.srv1157562.hstgr.cloud/webhook/imprimir_historico_especifico";
 
   const numero = "@contato.numero";
   const chatId = "@chat.codigo";
@@ -21,47 +22,43 @@
     catch (_) { return null; }
   }
 
-  async function chamarN8n(payload) {
-    console.log("[IMPRIMIR] POST N8N:", N8N_WEBHOOK_URL);
+    async function chamarN8n(payload, url) {
+    console.log("[IMPRIMIR] POST N8N:", url);
     console.log("[IMPRIMIR] PAYLOAD:", payload);
 
     let resp;
     try {
-      resp = await fetch(N8N_WEBHOOK_URL, {
+        resp = await fetch(url, {
         method: "POST",
         cache: "no-store",
-        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        headers: { 
+            "Content-Type": "application/json", 
+            "Accept": "application/json" 
+        },
         body: JSON.stringify(payload),
-      });
+        });
     } catch (e) {
-      throw new Error("Falha de rede/CORS ao chamar n8n. Detalhe: " + (e?.message || e));
+        throw new Error("Falha ao chamar n8n: " + (e?.message || e));
     }
 
     const raw = await resp.text().catch(() => "");
     console.log("[IMPRIMIR] N8N status:", resp.status, "raw:", raw);
 
-    if (!raw) throw new Error("N8N retornou vazio. Verifique o workflow!");
+    if (!raw) throw new Error("N8N retornou vazio.");
 
     let data;
-    try { data = JSON.parse(raw); }
-    catch (_) { throw new Error("N8N não retornou JSON válido. Resposta: " + raw); }
-
-    let respostaText = "";
-    if (Array.isArray(data)) {
-      
-      if (data[0] && typeof data[0].resposta === "string") {
-        respostaText = data[0].resposta;
-      } else {
-        throw new Error("N8N retornou array, mas sem 'resposta' string: " + JSON.stringify(data));
-      }
-    } else if (typeof data.resposta === "string") {
-      respostaText = data.resposta;
-    } else {
-      throw new Error("N8N não retornou {resposta: string}. JSON: " + JSON.stringify(data));
+    try {
+        data = JSON.parse(raw);
+    } catch (_) {
+        throw new Error("N8N não retornou JSON válido. Resposta: " + raw);
     }
 
-    return respostaText;
-  }
+    if (typeof data.resposta !== "string") {
+        throw new Error("JSON inválido. Esperado {resposta: string}");
+    }
+
+    return data.resposta;
+    }
 
     function imprimirTexto(resposta, titulo) {
     const safeTitle = titulo || "Histórico";
@@ -111,76 +108,122 @@
     doc.close();
     }
 
-  function renderModal() {
-    document.body.innerHTML = `
-      <style>
-        body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #000; }
-        .container { padding: 16px; width: 100%; max-width: 350px; margin: 0 auto; }
-        .actions { display: flex; gap: 16px; margin-bottom: 16px; justify-content: flex-start; }
-        button {
-          padding: 8px 8px;
-          width: 160px;
-          cursor: pointer;
-          background-color: #192d3e;
-          color: #ffffff;
-          border: none;
-          border-radius: 6px;
-          font-size: 14px;
-        }
-        .box { margin-top: 16px; }
-        .row { display: flex; gap: 16px; margin-top: 16px; justify-content: flex-start; }
-        .msg { margin-top: 10px; color: #b00020; font-size: 13px; min-height: 18px; white-space: pre-wrap; }
-      </style>
+    function renderModal() {
+  document.body.innerHTML = `
+    <style>
+      body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #000; }
+      .container { padding: 16px; width: 100%; max-width: 350px; margin: 0 auto; }
+      .actions { display: flex; gap: 16px; margin-bottom: 16px; justify-content: flex-start; }
+      button {
+        padding: 8px;
+        width: 160px;
+        cursor: pointer;
+        background-color: #192d3e;
+        color: #ffffff;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+      }
+      .box { margin-top: 16px; }
+      .row { display: flex; gap: 16px; margin-top: 16px; justify-content: flex-start; }
+      .msg { margin-top: 10px; color: #b00020; font-size: 13px; min-height: 18px; white-space: pre-wrap; }
+    </style>
 
-      <div class="container">
-        <div class="actions">
-          <button id="btn-hoje" type="button">HOJE</button>
-          <button id="btn-anteriores" type="button">DIAS ANTERIORES</button>
-        </div>
-
-        <div id="box-hoje" class="box" style="display:none;">
-          <p>Será impresso o histórico de hoje.</p>
-          <div class="row">
-            <button id="btn-confirmar-hoje" type="button">CONFIRMAR</button>
-            <button id="btn-cancelar-hoje" type="button">CANCELAR</button>
-          </div>
-          <div id="msg-hoje" class="msg"></div>
-        </div>
-
-        <div id="box-data" class="box" style="display:none;">
-          <p>(Depois fazemos os dias anteriores)</p>
-        </div>
+    <div class="container">
+      <div class="actions">
+        <button id="btn-hoje" type="button">HOJE</button>
+        <button id="btn-anteriores" type="button">DIAS ANTERIORES</button>
       </div>
-    `;
 
-    const btnHoje = document.getElementById("btn-hoje");
-    const btnAnt = document.getElementById("btn-anteriores");
-    const boxHoje = document.getElementById("box-hoje");
-    const boxData = document.getElementById("box-data");
-    const msgHojeEl = document.getElementById("msg-hoje");
+      <div id="box-hoje" class="box" style="display:none;">
+        <p>Será impresso o histórico de hoje.</p>
+        <div class="row">
+          <button id="btn-confirmar-hoje" type="button">CONFIRMAR</button>
+          <button id="btn-cancelar-hoje" type="button">CANCELAR</button>
+        </div>
+        <div id="msg-hoje" class="msg"></div>
+      </div>
 
-    function setMsgHoje(t) { msgHojeEl.textContent = t || ""; }
+      <div id="box-data" class="box" style="display:none;">
+        <p>Informe a data no formato: DD/MM/AAAA</p>
 
-    btnHoje.onclick = () => {
-      boxData.style.display = "none";
-      boxHoje.style.display = "block";
-      setMsgHoje("");
-    };
+        <input 
+          id="input-data" 
+          type="text" 
+          placeholder="02/02/2026"
+          maxlength="10"
+          style="width: 160px; padding: 6px; margin-top: 8px;"
+        />
 
-    btnAnt.onclick = () => {
-      boxHoje.style.display = "none";
-      boxData.style.display = "block";
-      setMsgHoje("");
-    };
+        <div class="row">
+          <button id="btn-confirmar-data" type="button">CONFIRMAR</button>
+          <button id="btn-cancelar-data" type="button">CANCELAR</button>
+        </div>
 
-    document.getElementById("btn-cancelar-hoje").onclick = () => {
-      window.WlExtension.closeModal({ cancelled: true });
-    };
+        <div id="msg-data" class="msg"></div>
+      </div>
+    </div>
+  `;
 
-    document.getElementById("btn-confirmar-hoje").onclick = () => {
-      window.WlExtension.closeModal({ action: "hoje" });
-    };
-  }
+  const inputData = document.getElementById("input-data");
+  const msgDataEl = document.getElementById("msg-data");
+  const msgHojeEl = document.getElementById("msg-hoje");
+  const boxHoje = document.getElementById("box-hoje");
+  const boxData = document.getElementById("box-data");
+
+  function setMsgData(t) { msgDataEl.textContent = t || ""; }
+  function setMsgHoje(t) { msgHojeEl.textContent = t || ""; }
+
+  // Máscara automática DD/MM/AAAA
+  inputData.addEventListener("input", (e) => {
+    let v = e.target.value.replace(/\D/g, "").slice(0, 8);
+
+    if (v.length >= 5)
+      v = v.replace(/(\d{2})(\d{2})(\d{0,4})/, "$1/$2/$3");
+    else if (v.length >= 3)
+      v = v.replace(/(\d{2})(\d{0,2})/, "$1/$2");
+
+    e.target.value = v;
+  });
+
+  document.getElementById("btn-hoje").onclick = () => {
+    boxData.style.display = "none";
+    boxHoje.style.display = "block";
+    setMsgHoje("");
+  };
+
+  document.getElementById("btn-anteriores").onclick = () => {
+    boxHoje.style.display = "none";
+    boxData.style.display = "block";
+    setMsgData("");
+  };
+
+  document.getElementById("btn-cancelar-hoje").onclick = () => {
+    window.WlExtension.closeModal({ cancelled: true });
+  };
+
+  document.getElementById("btn-confirmar-hoje").onclick = () => {
+    window.WlExtension.closeModal({ action: "hoje" });
+  };
+
+  document.getElementById("btn-confirmar-data").onclick = () => {
+    const dataDigitada = inputData.value.trim();
+
+    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(dataDigitada)) {
+      setMsgData("Data inválida. Use DD/MM/AAAA");
+      return;
+    }
+
+    window.WlExtension.closeModal({
+      action: "data",
+      data: dataDigitada
+    });
+  };
+
+  document.getElementById("btn-cancelar-data").onclick = () => {
+    window.WlExtension.closeModal({ cancelled: true });
+  };
+}
 
   function initExtension() {
     window.WlExtension.initialize({
@@ -204,47 +247,59 @@
                 callback: async (ret) => {
                   if (!ret || ret.cancelled) return;
 
-                  if (ret.action === "hoje") {
-                    let userInfo = {};
-                    try {
-                      userInfo = await window.WlExtension.getInfoUser();
-                      console.log("[WL] userInfo:", userInfo);
-                    } catch (e) {
-                      console.warn("[WL] Falha ao obter userInfo:", e);
-                    }
+                  if (ret.action === "hoje" || ret.action === "data") {
 
-                    const payload = {
-                      tipo: "hoje",
+                let userInfo = {};
+                try {
+                    userInfo = await window.WlExtension.getInfoUser();
+                } catch (e) {}
 
-                      attendanceId: atendimento?.atendimentoId ?? "",
-                      contactId: atendimento?.contactId ?? atendimento?.contact?.id ?? "",
-                      channelId: atendimento?.channelId ?? atendimento?.channel?.id ?? "",
-                      organizationId: atendimento?.organizationId ?? atendimento?.organization?.id ?? "",
-                      sectorId: atendimento?.sectorId ?? atendimento?.sector?.id ?? "",
+                const payload = {
+                    tipo: ret.action,
 
-                      userId: userInfo?.userId || "",
-                      systemKey: userInfo?.systemKey || "",
+                    data: ret.data || "",
 
-                      numero: numero,
-                      chatId: chatId,
-                      tokenAVS: tokenAVS
-                    };
+                    attendanceId: atendimento?.atendimentoId ?? "",
+                    contactId: atendimento?.contactId ?? atendimento?.contact?.id ?? "",
+                    channelId: atendimento?.channelId ?? atendimento?.channel?.id ?? "",
+                    organizationId: atendimento?.organizationId ?? atendimento?.organization?.id ?? "",
+                    sectorId: atendimento?.sectorId ?? atendimento?.sector?.id ?? "",
 
-                    try {
-                      const resposta = await chamarN8n(payload);
-                      imprimirTexto(resposta, "Histórico de hoje");
+                    userId: userInfo?.userId || "",
+                    systemKey: userInfo?.systemKey || "",
 
-                      window.WlExtension.alert({
-                        message: "Impressão enviada!",
-                        variant: "success"
-                      });
-                    } catch (e) {
-                      window.WlExtension.alert({
-                        message: "Falhou ao imprimir: " + String(e?.message || e),
-                        variant: "error"
-                      });
-                    }
-                  }
+                    numero: numero,
+                    chatId: chatId,
+                    tokenAVS: tokenAVS
+                };
+
+                try {
+
+                    const webhookUrl = ret.action === "hoje"
+                    ? N8N_WEBHOOK_URL
+                    : N8N_WEBHOOK_URL_ESPECIFICO;
+
+                    const resposta = await chamarN8n(payload, webhookUrl);
+
+                    const titulo = ret.action === "hoje"
+                    ? "Histórico de hoje"
+                    : "Histórico de " + ret.data;
+
+                    imprimirTexto(resposta, titulo);
+
+                    window.WlExtension.alert({
+                    message: "Impressão enviada!",
+                    variant: "success"
+                    });
+
+                } catch (e) {
+                    window.WlExtension.alert({
+                    message: "Falhou ao imprimir: " + String(e?.message || e),
+                    variant: "error"
+                    });
+                }
+                }
+
                 }
               });
             }
