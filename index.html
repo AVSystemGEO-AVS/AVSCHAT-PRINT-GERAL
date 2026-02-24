@@ -63,30 +63,29 @@
     return respostaText;
   }
 
-  function imprimirTexto(resposta, titulo) {
+    function imprimirTexto(resposta, titulo) {
     const safeTitle = titulo || "Histórico";
     const safeText = String(resposta || "")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
 
     const html = `
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>${safeTitle}</title>
-  <style>
-    body { font-family: Arial, Helvetica, sans-serif; padding: 24px; }
-    h1 { font-size: 18px; margin: 0 0 12px; }
-    pre { white-space: pre-wrap; word-wrap: break-word; font-size: 12.5px; line-height: 1.45; }
-  </style>
-</head>
-<body>
-  <h1>${safeTitle}</h1>
-  <pre>${safeText}</pre>
-</body>
-</html>`.trim();
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+    <meta charset="UTF-8" />
+    <title>${safeTitle}</title>
+    <style>
+        body { font-family: Arial, Helvetica, sans-serif; padding: 24px; }
+        h1 { font-size: 18px; margin: 0 0 12px; }
+        pre { white-space: pre-wrap; word-wrap: break-word; font-size: 12.5px; line-height: 1.45; }
+    </style>
+    </head>
+    <body>
+    <h1>${safeTitle}</h1>
+    <pre>${safeText}</pre>
+    </body>
+    </html>`.trim();
 
     const iframe = document.createElement("iframe");
     iframe.style.position = "fixed";
@@ -97,23 +96,20 @@
     iframe.style.border = "0";
     document.body.appendChild(iframe);
 
+    iframe.onload = function () {
+        try {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        } finally {
+        setTimeout(() => iframe.remove(), 1000);
+        }
+    };
+
     const doc = iframe.contentWindow.document;
     doc.open();
     doc.write(html);
     doc.close();
-
-    const doPrint = () => {
-      try {
-        iframe.contentWindow.focus();
-        iframe.contentWindow.print();
-      } finally {
-        setTimeout(() => iframe.remove(), 700);
-      }
-    };
-
-    iframe.onload = doPrint;
-    setTimeout(doPrint, 250);
-  }
+    }
 
   function renderModal() {
     document.body.innerHTML = `
