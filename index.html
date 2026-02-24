@@ -31,9 +31,9 @@
         resp = await fetch(url, {
         method: "POST",
         cache: "no-store",
-        headers: { 
-            "Content-Type": "application/json", 
-            "Accept": "application/json" 
+        headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
         },
         body: JSON.stringify(payload),
         });
@@ -53,11 +53,25 @@
         throw new Error("N8N não retornou JSON válido. Resposta: " + raw);
     }
 
-    if (typeof data.resposta !== "string") {
+    let respostaText = "";
+
+    if (Array.isArray(data)) {
+        if (data[0] && typeof data[0].resposta === "string") {
+        respostaText = data[0].resposta;
+        } else {
+        throw new Error("Array retornado sem 'resposta' válida.");
+        }
+    }
+
+    else if (typeof data.resposta === "string") {
+        respostaText = data.resposta;
+    }
+
+    else {
         throw new Error("JSON inválido. Esperado {resposta: string}");
     }
 
-    return data.resposta;
+    return respostaText;
     }
 
     function imprimirTexto(resposta, titulo) {
@@ -109,61 +123,61 @@
     }
 
     function renderModal() {
-  document.body.innerHTML = `
-    <style>
-      body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #000; }
-      .container { padding: 16px; width: 100%; max-width: 350px; margin: 0 auto; }
-      .actions { display: flex; gap: 16px; margin-bottom: 16px; justify-content: flex-start; }
-      button {
-        padding: 8px;
-        width: 160px;
-        cursor: pointer;
-        background-color: #192d3e;
-        color: #ffffff;
-        border: none;
-        border-radius: 6px;
-        font-size: 14px;
-      }
-      .box { margin-top: 16px; }
-      .row { display: flex; gap: 16px; margin-top: 16px; justify-content: flex-start; }
-      .msg { margin-top: 10px; color: #b00020; font-size: 13px; min-height: 18px; white-space: pre-wrap; }
-    </style>
+    document.body.innerHTML = `
+        <style>
+        body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #000; }
+        .container { padding: 16px; width: 100%; max-width: 350px; margin: 0 auto; }
+        .actions { display: flex; gap: 16px; margin-bottom: 16px; justify-content: flex-start; }
+        button {
+            padding: 8px;
+            width: 160px;
+            cursor: pointer;
+            background-color: #192d3e;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .box { margin-top: 16px; }
+        .row { display: flex; gap: 16px; margin-top: 16px; justify-content: flex-start; }
+        .msg { margin-top: 10px; color: #b00020; font-size: 13px; min-height: 18px; white-space: pre-wrap; }
+        </style>
 
-    <div class="container">
-      <div class="actions">
-        <button id="btn-hoje" type="button">HOJE</button>
-        <button id="btn-anteriores" type="button">DIAS ANTERIORES</button>
-      </div>
-
-      <div id="box-hoje" class="box" style="display:none;">
-        <p>Será impresso o histórico de hoje.</p>
-        <div class="row">
-          <button id="btn-confirmar-hoje" type="button">CONFIRMAR</button>
-          <button id="btn-cancelar-hoje" type="button">CANCELAR</button>
-        </div>
-        <div id="msg-hoje" class="msg"></div>
-      </div>
-
-      <div id="box-data" class="box" style="display:none;">
-        <p>Informe a data no formato: DD/MM/AAAA</p>
-
-        <input 
-          id="input-data" 
-          type="text" 
-          placeholder="02/02/2026"
-          maxlength="10"
-          style="width: 160px; padding: 6px; margin-top: 8px;"
-        />
-
-        <div class="row">
-          <button id="btn-confirmar-data" type="button">CONFIRMAR</button>
-          <button id="btn-cancelar-data" type="button">CANCELAR</button>
+        <div class="container">
+        <div class="actions">
+            <button id="btn-hoje" type="button">HOJE</button>
+            <button id="btn-anteriores" type="button">DIAS ANTERIORES</button>
         </div>
 
-        <div id="msg-data" class="msg"></div>
-      </div>
-    </div>
-  `;
+        <div id="box-hoje" class="box" style="display:none;">
+            <p>Será impresso o histórico de hoje.</p>
+            <div class="row">
+            <button id="btn-confirmar-hoje" type="button">CONFIRMAR</button>
+            <button id="btn-cancelar-hoje" type="button">CANCELAR</button>
+            </div>
+            <div id="msg-hoje" class="msg"></div>
+        </div>
+
+        <div id="box-data" class="box" style="display:none;">
+            <p>Informe a data no formato: DD/MM/AAAA</p>
+
+            <input 
+            id="input-data" 
+            type="text" 
+            placeholder="02/02/2026"
+            maxlength="10"
+            style="width: 160px; padding: 6px; margin-top: 8px;"
+            />
+
+            <div class="row">
+            <button id="btn-confirmar-data" type="button">CONFIRMAR</button>
+            <button id="btn-cancelar-data" type="button">CANCELAR</button>
+            </div>
+
+            <div id="msg-data" class="msg"></div>
+        </div>
+        </div>
+    `;
 
   const inputData = document.getElementById("input-data");
   const msgDataEl = document.getElementById("msg-data");
@@ -174,7 +188,6 @@
   function setMsgData(t) { msgDataEl.textContent = t || ""; }
   function setMsgHoje(t) { msgHojeEl.textContent = t || ""; }
 
-  // Máscara automática DD/MM/AAAA
   inputData.addEventListener("input", (e) => {
     let v = e.target.value.replace(/\D/g, "").slice(0, 8);
 
