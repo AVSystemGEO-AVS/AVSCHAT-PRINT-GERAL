@@ -162,11 +162,16 @@
             <p>Informe a data no formato: DD/MM/AAAA</p>
 
             <input 
-            id="input-data" 
-            type="text" 
-            placeholder="02/02/2026"
-            maxlength="10"
-            style="width: 160px; padding: 6px; margin-top: 8px;"
+              id="input-data"
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              autocorrect="off"
+              autocapitalize="off"
+              spellcheck="false"
+              placeholder="02/02/2026"
+              maxlength="10"
+              style="width: 160px; padding: 6px; margin-top: 8px;"
             />
 
             <div class="row">
@@ -190,13 +195,16 @@
 
   inputData.addEventListener("input", (e) => {
     let v = e.target.value.replace(/\D/g, "").slice(0, 8);
-
-    if (v.length >= 5)
-      v = v.replace(/(\d{2})(\d{2})(\d{0,4})/, "$1/$2/$3");
-    else if (v.length >= 3)
-      v = v.replace(/(\d{2})(\d{0,2})/, "$1/$2");
-
-    e.target.value = v;
+  
+    let dia = v.slice(0, 2);
+    let mes = v.slice(2, 4);
+    let ano = v.slice(4, 8);
+  
+    let formatado = dia;
+    if (mes) formatado += "/" + mes;
+    if (ano) formatado += "/" + ano;
+  
+    e.target.value = formatado;
   });
 
   document.getElementById("btn-hoje").onclick = () => {
@@ -258,60 +266,61 @@
                 height: "300px",
 
                 callback: async (ret) => {
+                  console.log("RETORNO MODAL:", ret);
                   if (!ret || ret.cancelled) return;
 
                   if (ret.action === "hoje" || ret.action === "data") {
-
-                let userInfo = {};
-                try {
-                    userInfo = await window.WlExtension.getInfoUser();
-                } catch (e) {}
-
-                const payload = {
-                    tipo: ret.action,
-
-                    data: ret.data || "",
-
-                    attendanceId: atendimento?.atendimentoId ?? "",
-                    contactId: atendimento?.contactId ?? atendimento?.contact?.id ?? "",
-                    channelId: atendimento?.channelId ?? atendimento?.channel?.id ?? "",
-                    organizationId: atendimento?.organizationId ?? atendimento?.organization?.id ?? "",
-                    sectorId: atendimento?.sectorId ?? atendimento?.sector?.id ?? "",
-
-                    userId: userInfo?.userId || "",
-                    systemKey: userInfo?.systemKey || "",
-
-                    numero: numero,
-                    chatId: chatId,
-                    tokenAVS: tokenAVS
-                };
-
-                try {
-
-                    const webhookUrl = ret.action === "hoje"
-                    ? N8N_WEBHOOK_URL
-                    : N8N_WEBHOOK_URL_ESPECIFICO;
-
-                    const resposta = await chamarN8n(payload, webhookUrl);
-
-                    const titulo = ret.action === "hoje"
-                    ? "Histórico de hoje"
-                    : "Histórico de " + ret.data;
-
-                    imprimirTexto(resposta, titulo);
-
-                    window.WlExtension.alert({
-                    message: "Impressão enviada!",
-                    variant: "success"
-                    });
-
-                } catch (e) {
-                    window.WlExtension.alert({
-                    message: "Falhou ao imprimir: " + String(e?.message || e),
-                    variant: "error"
-                    });
-                }
-                }
+    
+                    let userInfo = {};
+                    try {
+                        userInfo = await window.WlExtension.getInfoUser();
+                    } catch (e) {}
+    
+                    const payload = {
+                        tipo: ret.action,
+    
+                        data: ret.data || "",
+    
+                        attendanceId: atendimento?.atendimentoId ?? "",
+                        contactId: atendimento?.contactId ?? atendimento?.contact?.id ?? "",
+                        channelId: atendimento?.channelId ?? atendimento?.channel?.id ?? "",
+                        organizationId: atendimento?.organizationId ?? atendimento?.organization?.id ?? "",
+                        sectorId: atendimento?.sectorId ?? atendimento?.sector?.id ?? "",
+    
+                        userId: userInfo?.userId || "",
+                        systemKey: userInfo?.systemKey || "",
+    
+                        numero: numero,
+                        chatId: chatId,
+                        tokenAVS: tokenAVS
+                    };
+    
+                    try {
+    
+                        const webhookUrl = ret.action === "hoje"
+                        ? N8N_WEBHOOK_URL
+                        : N8N_WEBHOOK_URL_ESPECIFICO;
+    
+                        const resposta = await chamarN8n(payload, webhookUrl);
+    
+                        const titulo = ret.action === "hoje"
+                        ? "Histórico de hoje"
+                        : "Histórico de " + ret.data;
+    
+                        imprimirTexto(resposta, titulo);
+    
+                        window.WlExtension.alert({
+                        message: "Impressão enviada!",
+                        variant: "success"
+                        });
+    
+                    } catch (e) {
+                        window.WlExtension.alert({
+                        message: "Falhou ao imprimir: " + String(e?.message || e),
+                        variant: "error"
+                        });
+                    }
+                    }
 
                 }
               });
