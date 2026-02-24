@@ -30,10 +30,7 @@
       resp = await fetch(N8N_WEBHOOK_URL, {
         method: "POST",
         cache: "no-store",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
         body: JSON.stringify(payload),
       });
     } catch (e) {
@@ -43,24 +40,27 @@
     const raw = await resp.text().catch(() => "");
     console.log("[IMPRIMIR] N8N status:", resp.status, "raw:", raw);
 
-    if (!resp.ok) throw new Error(`N8N HTTP ${resp.status}. Resposta: ${raw}`);
+    if (!raw) throw new Error("N8N retornou vazio. Verifique o workflow!");
 
     let data;
     try { data = JSON.parse(raw); }
     catch (_) { throw new Error("N8N não retornou JSON válido. Resposta: " + raw); }
 
+    let respostaText = "";
     if (Array.isArray(data)) {
-      if (data.length > 0 && typeof data[0].resposta === "string") {
-        return data[0].resposta;
+      
+      if (data[0] && typeof data[0].resposta === "string") {
+        respostaText = data[0].resposta;
+      } else {
+        throw new Error("N8N retornou array, mas sem 'resposta' string: " + JSON.stringify(data));
       }
-      throw new Error("N8N retornou array, mas sem {resposta: string}. JSON: " + JSON.stringify(data));
+    } else if (typeof data.resposta === "string") {
+      respostaText = data.resposta;
+    } else {
+      throw new Error("N8N não retornou {resposta: string}. JSON: " + JSON.stringify(data));
     }
-    
-    if (data && typeof data.resposta === "string") {
-      return data.resposta;
-    }
-    
-    throw new Error("N8N não retornou formato esperado. JSON: " + JSON.stringify(data));
+
+    return respostaText;
   }
 
   function imprimirTexto(resposta, titulo) {
