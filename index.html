@@ -107,13 +107,20 @@
     iframe.style.border = "0";
     document.body.appendChild(iframe);
 
+    let jaImprimiu = false;
+
     iframe.onload = function () {
-        try {
-        iframe.contentWindow.focus();
-        iframe.contentWindow.print();
-        } finally {
-        setTimeout(() => iframe.remove(), 1000);
-        }
+        if (jaImprimiu) return; 
+        jaImprimiu = true;
+    
+        setTimeout(() => {
+            try {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+            } finally {
+                setTimeout(() => iframe.remove(), 1000);
+            }
+        }, 200); 
     };
 
     const doc = iframe.contentWindow.document;
@@ -163,13 +170,11 @@
 
             <input 
               id="input-data"
-              type="text"
+              type="tel"
+              pattern="\d{2}/\d{2}/\d{4}"
               inputmode="numeric"
-              autocomplete="off"
-              autocorrect="off"
-              autocapitalize="off"
-              spellcheck="false"
-              placeholder="02/02/2026"
+              autocomplete="new-password"
+              placeholder="DD/MM/AAAA"
               maxlength="10"
               style="width: 160px; padding: 6px; margin-top: 8px;"
             />
@@ -193,18 +198,30 @@
   function setMsgData(t) { msgDataEl.textContent = t || ""; }
   function setMsgHoje(t) { msgHojeEl.textContent = t || ""; }
 
-  inputData.addEventListener("input", (e) => {
-    let v = e.target.value.replace(/\D/g, "").slice(0, 8);
+  inputData.addEventListener("input", function () {
+    let numbers = this.value.replace(/\D/g, "");
   
-    let dia = v.slice(0, 2);
-    let mes = v.slice(2, 4);
-    let ano = v.slice(4, 8);
+    if (numbers.length > 8) numbers = numbers.substring(0, 8);
   
-    let formatado = dia;
-    if (mes) formatado += "/" + mes;
-    if (ano) formatado += "/" + ano;
+    let result = "";
   
-    e.target.value = formatado;
+    if (numbers.length >= 2) {
+      result = numbers.substring(0, 2);
+    } else {
+      result = numbers;
+    }
+  
+    if (numbers.length >= 4) {
+      result += "/" + numbers.substring(2, 4);
+    } else if (numbers.length > 2) {
+      result += "/" + numbers.substring(2);
+    }
+  
+    if (numbers.length >= 5) {
+      result += "/" + numbers.substring(4, 8);
+    }
+  
+    this.value = result;
   });
 
   document.getElementById("btn-hoje").onclick = () => {
