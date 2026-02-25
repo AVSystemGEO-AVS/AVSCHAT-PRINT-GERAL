@@ -283,63 +283,64 @@
                 height: "300px",
 
                 callback: async (ret) => {
-                  console.log("RETORNO MODAL:", ret);
-                  if (!ret || ret.cancelled) return;
+                console.log("RETORNO MODAL:", ret);
 
-                  if (ret.action === "hoje" || ret.action === "data") {
-    
-                    let userInfo = {};
-                    try {
-                        userInfo = await window.WlExtension.getInfoUser();
-                    } catch (e) {}
-    
-                    const payload = {
-                        tipo: ret.action,
-    
-                        data: ret.data || "",
-    
-                        attendanceId: atendimento?.atendimentoId ?? "",
-                        contactId: atendimento?.contactId ?? atendimento?.contact?.id ?? "",
-                        channelId: atendimento?.channelId ?? atendimento?.channel?.id ?? "",
-                        organizationId: atendimento?.organizationId ?? atendimento?.organization?.id ?? "",
-                        sectorId: atendimento?.sectorId ?? atendimento?.sector?.id ?? "",
-    
-                        userId: userInfo?.userId || "",
-                        systemKey: userInfo?.systemKey || "",
-    
-                        numero: numero,
-                        chatId: chatId,
-                        tokenAVS: tokenAVS
-                    };
-    
-                    try {
-    
-                        const webhookUrl = ret.action === "hoje"
-                        ? N8N_WEBHOOK_URL
-                        : N8N_WEBHOOK_URL_ESPECIFICO;
-    
-                        const resposta = await chamarN8n(payload, webhookUrl);
-    
-                        const titulo = ret.action === "hoje"
-                        ? "Histórico de hoje"
-                        : "Histórico de " + ret.data;
-    
-                        imprimirTexto(resposta, titulo);
-    
-                        window.WlExtension.alert({
-                        message: "Impressão enviada!",
-                        variant: "success"
-                        });
-    
-                    } catch (e) {
-                        window.WlExtension.alert({
-                        message: "Falhou ao imprimir: " + String(e?.message || e),
-                        variant: "error"
-                        });
-                    }
-                    }
+                if (!ret || ret.cancelled) return;
 
+                let userInfo = {};
+                try {
+                  userInfo = await window.WlExtension.getInfoUser();
+                } catch (e) {}
+
+                const payload = {
+                  tipo: ret.action,
+                  data: ret.data || "",
+
+                  attendanceId: atendimento?.atendimentoId ?? "",
+                  contactId: atendimento?.contactId ?? atendimento?.contact?.id ?? "",
+                  channelId: atendimento?.channelId ?? atendimento?.channel?.id ?? "",
+                  organizationId: atendimento?.organizationId ?? atendimento?.organization?.id ?? "",
+                  sectorId: atendimento?.sectorId ?? atendimento?.sector?.id ?? "",
+
+                  userId: userInfo?.userId || "",
+                  systemKey: userInfo?.systemKey || "",
+
+                  numero: numero,
+                  chatId: chatId,
+                  tokenAVS: tokenAVS
+                };
+
+                try {
+
+                  const webhookUrl =
+                    ret.action === "data"
+                      ? N8N_WEBHOOK_URL_ESPECIFICO
+                      : N8N_WEBHOOK_URL;
+
+                  console.log("WEBHOOK ESCOLHIDO:", webhookUrl);
+
+                  const resposta = await chamarN8n(payload, webhookUrl);
+
+                  const titulo =
+                    ret.action === "data"
+                      ? "Histórico de " + ret.data
+                      : "Histórico de hoje";
+
+                  imprimirTexto(resposta, titulo);
+
+                  window.WlExtension.alert({
+                    message: "Impressão enviada!",
+                    variant: "success"
+                  });
+
+                } catch (e) {
+                  window.WlExtension.alert({
+                    message: "Falhou ao imprimir: " + String(e?.message || e),
+                    variant: "error"
+                  });
                 }
+              }
+
               });
             }
           }
