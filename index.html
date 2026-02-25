@@ -166,17 +166,17 @@
         </div>
 
         <div id="box-data" class="box" style="display:none;">
-            <p>Informe a data no formato: DD/MM/AAAA</p>
-
+        
+            <p>Informe a data no formato: DD/MM/AA</p>
+            
             <input 
               id="input-data"
               type="tel"
-              pattern="\d{2}/\d{2}/\d{4}"
+              pattern="\d{2}/\d{2}/\d{2}"
               inputmode="numeric"
               autocomplete="new-password"
-              placeholder="DD/MM/AAAA"
-              maxlength="10"
-              style="width: 160px; padding: 6px; margin-top: 8px;"
+              placeholder="DD/MM/AA"
+              maxlength="8"
             />
 
             <div class="row">
@@ -247,8 +247,8 @@
   document.getElementById("btn-confirmar-data").onclick = () => {
     const dataDigitada = inputData.value.trim();
 
-    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(dataDigitada)) {
-      setMsgData("Data inválida. Use DD/MM/AAAA");
+    if (!/^\d{2}\/\d{2}\/\d{2}$/.test(dataDigitada)) {
+      setMsgData("Data inválida. Use DD/MM/AA");
       return;
     }
 
