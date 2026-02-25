@@ -11,8 +11,7 @@
 
 <script>
   const N8N_WEBHOOK_URL = "https://n8n.srv1157562.hstgr.cloud/webhook/imprimir_historico";
-  const N8N_WEBHOOK_URL_ESPECIFICO = "https://n8n.srv1157562.hstgr.cloud/webhook/imprimir_historico_especifico";
-
+  
   const numero = "@contato.numero";
   const chatId = "@chat.codigo";
   const tokenAVS = "@canal.token";
@@ -312,10 +311,7 @@
 
                 try {
 
-                  const webhookUrl =
-                    ret.action === "data"
-                      ? N8N_WEBHOOK_URL_ESPECIFICO
-                      : N8N_WEBHOOK_URL;
+                  const webhookUrl = N8N_WEBHOOK_URL;
 
                   console.log("WEBHOOK ESCOLHIDO:", webhookUrl);
 
