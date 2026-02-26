@@ -367,17 +367,20 @@
 
                 const payload = {
                   tipo: ret.action,
+                
                   data: ret.data || "",
-
+                  dataInicio: ret.dataInicio || "",
+                  dataFim: ret.dataFim || "",
+                
                   attendanceId: atendimento?.atendimentoId ?? "",
                   contactId: atendimento?.contactId ?? atendimento?.contact?.id ?? "",
                   channelId: atendimento?.channelId ?? atendimento?.channel?.id ?? "",
                   organizationId: atendimento?.organizationId ?? atendimento?.organization?.id ?? "",
                   sectorId: atendimento?.sectorId ?? atendimento?.sector?.id ?? "",
-
+                
                   userId: userInfo?.userId || "",
                   systemKey: userInfo?.systemKey || "",
-
+                
                   numero: numero,
                   chatId: chatId,
                   tokenAVS: tokenAVS
@@ -391,10 +394,15 @@
 
                   const resposta = await chamarN8n(payload, webhookUrl);
 
-                  const titulo =
-                    ret.action === "data"
-                      ? "Histórico de " + ret.data
-                      : "Histórico de hoje";
+                  let titulo = "Histórico de hoje";
+                  
+                  if (ret.action === "data") {
+                    titulo = "Histórico de " + ret.data;
+                  }
+                  
+                  if (ret.action === "intervalo") {
+                    titulo = "Histórico de " + ret.dataInicio + " até " + ret.dataFim;
+                  }
 
                   imprimirTexto(resposta, titulo);
 
