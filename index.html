@@ -168,7 +168,19 @@
 
         <div id="box-data" class="box" style="display:none;">
         
-            <p>Informe a data no formato: DD/MM/AA</p>
+            <p>Informe dia início (DD/MM/AA)</p>
+            
+            <input 
+              id="input-data"
+              type="tel"
+              pattern="\d{2}/\d{2}/\d{2}"
+              inputmode="numeric"
+              autocomplete="new-password"
+              placeholder="DD/MM/AA"
+              maxlength="8"
+            />
+            
+            <p>Informe dia fim (DD/MM/AA)</p>
             
             <input 
               id="input-data"
