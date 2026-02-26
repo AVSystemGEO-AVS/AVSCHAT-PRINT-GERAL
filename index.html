@@ -2,86 +2,86 @@
 <html lang="pt-BR">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>IMPRIMIR</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IMPRIMIR</title>
 </head>
 
 <body>
 
-    <script src="https://fileschat.sfo2.cdn.digitaloceanspaces.com/public/libs/wlclient.js"></script>
+  <script src="https://fileschat.sfo2.cdn.digitaloceanspaces.com/public/libs/wlclient.js"></script>
 
-    <script>
-        const N8N_WEBHOOK_URL = "https://n8n.srv1157562.hstgr.cloud/webhook/imprimir_historico";
+  <script>
+    const N8N_WEBHOOK_URL = "https://n8n.srv1157562.hstgr.cloud/webhook/imprimir_historico";
 
-        const numero = "@contato.numero";
-        const chatId = "@chat.codigo";
-        const tokenAVS = "@canal.token";
+    const numero = "@contato.numero";
+    const chatId = "@chat.codigo";
+    const tokenAVS = "@canal.token";
 
-        function getParam(name) {
-            try { return new URL(window.location.href).searchParams.get(name); }
-            catch (_) { return null; }
+    function getParam(name) {
+      try { return new URL(window.location.href).searchParams.get(name); }
+      catch (_) { return null; }
+    }
+
+    async function chamarN8n(payload, url) {
+      console.log("[IMPRIMIR] POST N8N:", url);
+      console.log("[IMPRIMIR] PAYLOAD:", payload);
+
+      let resp;
+      try {
+        resp = await fetch(url, {
+          method: "POST",
+          cache: "no-store",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify(payload),
+        });
+      } catch (e) {
+        throw new Error("Falha ao chamar n8n: " + (e?.message || e));
+      }
+
+      const raw = await resp.text().catch(() => "");
+      console.log("[IMPRIMIR] N8N status:", resp.status, "raw:", raw);
+
+      if (!raw) throw new Error("N8N retornou vazio.");
+
+      let data;
+      try {
+        data = JSON.parse(raw);
+      } catch (_) {
+        throw new Error("N8N não retornou JSON válido. Resposta: " + raw);
+      }
+
+      let respostaText = "";
+
+      if (Array.isArray(data)) {
+        if (data[0] && typeof data[0].resposta === "string") {
+          respostaText = data[0].resposta;
+        } else {
+          throw new Error("Array retornado sem 'resposta' válida.");
         }
+      }
 
-        async function chamarN8n(payload, url) {
-            console.log("[IMPRIMIR] POST N8N:", url);
-            console.log("[IMPRIMIR] PAYLOAD:", payload);
+      else if (typeof data.resposta === "string") {
+        respostaText = data.resposta;
+      }
 
-            let resp;
-            try {
-                resp = await fetch(url, {
-                    method: "POST",
-                    cache: "no-store",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Accept": "application/json"
-                    },
-                    body: JSON.stringify(payload),
-                });
-            } catch (e) {
-                throw new Error("Falha ao chamar n8n: " + (e?.message || e));
-            }
+      else {
+        throw new Error("JSON inválido. Esperado {resposta: string}");
+      }
 
-            const raw = await resp.text().catch(() => "");
-            console.log("[IMPRIMIR] N8N status:", resp.status, "raw:", raw);
+      return respostaText;
+    }
 
-            if (!raw) throw new Error("N8N retornou vazio.");
+    function imprimirTexto(resposta, titulo) {
+      const safeTitle = titulo || "Histórico";
+      const safeText = String(resposta || "")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
 
-            let data;
-            try {
-                data = JSON.parse(raw);
-            } catch (_) {
-                throw new Error("N8N não retornou JSON válido. Resposta: " + raw);
-            }
-
-            let respostaText = "";
-
-            if (Array.isArray(data)) {
-                if (data[0] && typeof data[0].resposta === "string") {
-                    respostaText = data[0].resposta;
-                } else {
-                    throw new Error("Array retornado sem 'resposta' válida.");
-                }
-            }
-
-            else if (typeof data.resposta === "string") {
-                respostaText = data.resposta;
-            }
-
-            else {
-                throw new Error("JSON inválido. Esperado {resposta: string}");
-            }
-
-            return respostaText;
-        }
-
-        function imprimirTexto(resposta, titulo) {
-            const safeTitle = titulo || "Histórico";
-            const safeText = String(resposta || "")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;");
-
-            const html = `
+      const html = `
     <!DOCTYPE html>
     <html lang="pt-BR">
     <head>
@@ -99,256 +99,260 @@
     </body>
     </html>`.trim();
 
-            const iframe = document.createElement("iframe");
-            iframe.style.position = "fixed";
-            iframe.style.right = "0";
-            iframe.style.bottom = "0";
-            iframe.style.width = "0";
-            iframe.style.height = "0";
-            iframe.style.border = "0";
-            document.body.appendChild(iframe);
+      const iframe = document.createElement("iframe");
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "0";
+      document.body.appendChild(iframe);
 
-            let jaImprimiu = false;
+      let jaImprimiu = false;
 
-            iframe.onload = function () {
-                if (jaImprimiu) return;
-                jaImprimiu = true;
+      iframe.onload = function () {
+        if (jaImprimiu) return;
+        jaImprimiu = true;
 
-                setTimeout(() => {
-                    try {
-                        iframe.contentWindow.focus();
-                        iframe.contentWindow.print();
-                    } finally {
-                        setTimeout(() => iframe.remove(), 1000);
-                    }
-                }, 200);
-            };
+        setTimeout(() => {
+          try {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+          } finally {
+            setTimeout(() => iframe.remove(), 1000);
+          }
+        }, 200);
+      };
 
-            const doc = iframe.contentWindow.document;
-            doc.open();
-            doc.write(html);
-            doc.close();
+      const doc = iframe.contentWindow.document;
+      doc.open();
+      doc.write(html);
+      doc.close();
+    }
+
+    function renderModal() {
+      document.body.innerHTML = `
+        <style>
+        body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #000; }
+        .container { padding: 16px; width: 100%; max-width: 350px; margin: 0 auto; }
+        .actions { display: flex; gap: 16px; margin-bottom: 16px; justify-content: flex-start; }
+        button {
+            padding: 8px;
+            width: 160px;
+            cursor: pointer;
+            background-color: #192d3e;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
         }
+        .box { margin-top: 16px; }
+        .row { display: flex; gap: 16px; margin-top: 16px; justify-content: flex-start; }
+        .msg { margin-top: 10px; color: #b00020; font-size: 13px; min-height: 18px; white-space: pre-wrap; }
+        </style>
 
-        function renderModal() {
-            document.body.innerHTML = `
-    <style>
-      body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #000; }
-      .container { padding: 16px; width: 100%; max-width: 350px; margin: 0 auto; }
-      .actions { display: flex; gap: 16px; margin-bottom: 16px; justify-content: flex-start; }
-      button {
-          padding: 8px;
-          width: 160px;
-          cursor: pointer;
-          background-color: #192d3e;
-          color: #ffffff;
-          border: none;
-          border-radius: 6px;
-          font-size: 14px;
-      }
-      .box { margin-top: 16px; }
-      .row { display: flex; gap: 16px; margin-top: 16px; justify-content: flex-start; }
-      .msg { margin-top: 10px; color: #b00020; font-size: 13px; min-height: 18px; white-space: pre-wrap; }
-    </style>
+        <div class="container">
+        <div class="actions">
+            <button id="btn-hoje" type="button">HOJE</button>
+            <button id="btn-anteriores" type="button">DIAS ANTERIORES</button>
+        </div>
 
-    <div class="container">
-      <div class="actions">
-          <button id="btn-hoje" type="button">HOJE</button>
-          <button id="btn-anteriores" type="button">DIAS ANTERIORES</button>
-      </div>
-
-      <div id="box-hoje" class="box" style="display:none;">
-          <p>Será impresso o histórico de hoje.</p>
-          <div class="row">
+        <div id="box-hoje" class="box" style="display:none;">
+            <p>Será impresso o histórico de hoje.</p>
+            <div class="row">
             <button id="btn-confirmar-hoje" type="button">CONFIRMAR</button>
             <button id="btn-cancelar-hoje" type="button">CANCELAR</button>
-          </div>
-          <div id="msg-hoje" class="msg"></div>
-      </div>
+            </div>
+            <div id="msg-hoje" class="msg"></div>
+        </div>
 
-      <div id="box-data" class="box" style="display:none;">
-          <p>Informe dia início (opcional DD/MM/AA)</p>
-          <input id="input-data-inicio" type="tel" inputmode="numeric" placeholder="DD/MM/AA" maxlength="8" />
+        <div id="box-data" class="box" style="display:none;">
+        
+            <p>Informe a data no formato: DD/MM/AA</p>
+            
+            <input 
+              id="input-data"
+              type="tel"
+              pattern="\d{2}/\d{2}/\d{2}"
+              inputmode="numeric"
+              autocomplete="new-password"
+              placeholder="DD/MM/AA"
+              maxlength="8"
+            />
 
-          <p>Informe dia fim (obrigatório DD/MM/AA)</p>
-          <input id="input-data-fim" type="tel" inputmode="numeric" placeholder="DD/MM/AA" maxlength="8" />
-
-          <div class="row">
+            <div class="row">
             <button id="btn-confirmar-data" type="button">CONFIRMAR</button>
             <button id="btn-cancelar-data" type="button">CANCELAR</button>
-          </div>
+            </div>
 
-          <div id="msg-data" class="msg"></div>
-      </div>
-    </div>
-  `;
+            <div id="msg-data" class="msg"></div>
+        </div>
+        </div>
+    `;
 
-            const inputInicio = document.getElementById("input-data-inicio");
-            const inputFim = document.getElementById("input-data-fim");
-            const msgDataEl = document.getElementById("msg-data");
-            const msgHojeEl = document.getElementById("msg-hoje");
-            const boxHoje = document.getElementById("box-hoje");
-            const boxData = document.getElementById("box-data");
+      const inputData = document.getElementById("input-data");
+      const msgDataEl = document.getElementById("msg-data");
+      const msgHojeEl = document.getElementById("msg-hoje");
+      const boxHoje = document.getElementById("box-hoje");
+      const boxData = document.getElementById("box-data");
 
-            function setMsgData(t) { msgDataEl.textContent = t || ""; }
-            function setMsgHoje(t) { msgHojeEl.textContent = t || ""; }
+      function setMsgData(t) { msgDataEl.textContent = t || ""; }
+      function setMsgHoje(t) { msgHojeEl.textContent = t || ""; }
 
-            function aplicarMascara(input) {
-                input.addEventListener("input", function () {
-                    let numbers = this.value.replace(/\D/g, "");
-                    if (numbers.length > 8) numbers = numbers.substring(0, 8);
+      inputData.addEventListener("input", function () {
+        let numbers = this.value.replace(/\D/g, "");
 
-                    let result = "";
-                    if (numbers.length >= 2) result = numbers.substring(0, 2);
-                    else result = numbers;
+        if (numbers.length > 8) numbers = numbers.substring(0, 8);
 
-                    if (numbers.length >= 4) result += "/" + numbers.substring(2, 4);
-                    else if (numbers.length > 2) result += "/" + numbers.substring(2);
+        let result = "";
 
-                    if (numbers.length > 4) result += "/" + numbers.substring(4, 8);
-
-                    this.value = result;
-                });
-            }
-
-            aplicarMascara(inputInicio);
-            aplicarMascara(inputFim);
-
-            document.getElementById("btn-hoje").onclick = () => {
-                boxData.style.display = "none";
-                boxHoje.style.display = "block";
-                setMsgHoje("");
-            };
-
-            document.getElementById("btn-anteriores").onclick = () => {
-                boxHoje.style.display = "none";
-                boxData.style.display = "block";
-                setMsgData("");
-            };
-
-            document.getElementById("btn-cancelar-hoje").onclick = () => {
-                window.WlExtension.closeModal({ cancelled: true });
-            };
-
-            document.getElementById("btn-confirmar-hoje").onclick = () => {
-                window.WlExtension.closeModal({ action: "hoje" });
-            };
-
-            document.getElementById("btn-confirmar-data").onclick = () => {
-                const inicio = inputInicio.value.trim();
-                const fim = inputFim.value.trim();
-
-                if (!fim || !/^\d{2}\/\d{2}\/\d{2}$/.test(fim)) {
-                    setMsgData("Data fim obrigatória e deve ser DD/MM/AA");
-                    return;
-                }
-
-                if (inicio && !/^\d{2}\/\d{2}\/\d{2}$/.test(inicio)) {
-                    setMsgData("Data início inválida. Use DD/MM/AA ou deixe em branco");
-                    return;
-                }
-
-                window.WlExtension.closeModal({
-                    action: "intervalo",
-                    dataInicio: inicio || "",
-                    dataFim: fim
-                });
-            };
-
-            document.getElementById("btn-cancelar-data").onclick = () => {
-                window.WlExtension.closeModal({ cancelled: true });
-            };
-        }
-
-        function initExtension() {
-            window.WlExtension.initialize({
-                buttons: {
-                    "attendance-view": [
-                        {
-                            icon_url: "https://img.icons8.com/material-sharp/15/000000/print.png",
-                            text: "IMPRIMIR",
-                            callback: (atendimento) => {
-
-                                const modalUrl =
-                                    "https://avsysgeo-mariaeduarda.github.io/IMPRIMIR_AVS_CHAT/?mode=modal&v=" +
-                                    Date.now();
-
-                                window.WlExtension.modal({
-                                    title: "IMPRIMIR",
-                                    url: modalUrl,
-                                    maxWidth: "450px",
-                                    height: "300px",
-
-                                    callback: async (ret) => {
-                                        console.log("RETORNO MODAL:", ret);
-
-                                        if (!ret || ret.cancelled) return;
-
-                                        let userInfo = {};
-                                        try {
-                                            userInfo = await window.WlExtension.getInfoUser();
-                                        } catch (e) { }
-
-                                        const payload = {
-                                            tipo: ret.action,
-                                            data: ret.data || "",
-
-                                            attendanceId: atendimento?.atendimentoId ?? "",
-                                            contactId: atendimento?.contactId ?? atendimento?.contact?.id ?? "",
-                                            channelId: atendimento?.channelId ?? atendimento?.channel?.id ?? "",
-                                            organizationId: atendimento?.organizationId ?? atendimento?.organization?.id ?? "",
-                                            sectorId: atendimento?.sectorId ?? atendimento?.sector?.id ?? "",
-
-                                            userId: userInfo?.userId || "",
-                                            systemKey: userInfo?.systemKey || "",
-
-                                            numero: numero,
-                                            chatId: chatId,
-                                            tokenAVS: tokenAVS
-                                        };
-
-                                        try {
-
-                                            const webhookUrl = N8N_WEBHOOK_URL;
-
-                                            console.log("WEBHOOK ESCOLHIDO:", webhookUrl);
-
-                                            const resposta = await chamarN8n(payload, webhookUrl);
-
-                                            const titulo =
-                                                ret.action === "data"
-                                                    ? "Histórico de " + ret.data
-                                                    : "Histórico de hoje";
-
-                                            imprimirTexto(resposta, titulo);
-
-                                            window.WlExtension.alert({
-                                                message: "Impressão enviada!",
-                                                variant: "success"
-                                            });
-
-                                        } catch (e) {
-                                            window.WlExtension.alert({
-                                                message: "Falhou ao imprimir: " + String(e?.message || e),
-                                                variant: "error"
-                                            });
-                                        }
-                                    }
-
-                                });
-                            }
-                        }
-                    ]
-                }
-            });
-        }
-
-        if (getParam("mode") === "modal") {
-            renderModal();
+        if (numbers.length >= 2) {
+          result = numbers.substring(0, 2);
         } else {
-            initExtension();
+          result = numbers;
         }
-    </script>
+
+        if (numbers.length >= 4) {
+          result += "/" + numbers.substring(2, 4);
+        } else if (numbers.length > 2) {
+          result += "/" + numbers.substring(2);
+        }
+
+        if (numbers.length >= 5) {
+          result += "/" + numbers.substring(4, 8);
+        }
+
+        this.value = result;
+      });
+
+      document.getElementById("btn-hoje").onclick = () => {
+        boxData.style.display = "none";
+        boxHoje.style.display = "block";
+        setMsgHoje("");
+      };
+
+      document.getElementById("btn-anteriores").onclick = () => {
+        boxHoje.style.display = "none";
+        boxData.style.display = "block";
+        setMsgData("");
+      };
+
+      document.getElementById("btn-cancelar-hoje").onclick = () => {
+        window.WlExtension.closeModal({ cancelled: true });
+      };
+
+      document.getElementById("btn-confirmar-hoje").onclick = () => {
+        window.WlExtension.closeModal({ action: "hoje" });
+      };
+
+      document.getElementById("btn-confirmar-data").onclick = () => {
+        const dataDigitada = inputData.value.trim();
+
+        if (!/^\d{2}\/\d{2}\/\d{2}$/.test(dataDigitada)) {
+          setMsgData("Data inválida. Use DD/MM/AA");
+          return;
+        }
+
+        window.WlExtension.closeModal({
+          action: "data",
+          data: dataDigitada
+        });
+      };
+
+      document.getElementById("btn-cancelar-data").onclick = () => {
+        window.WlExtension.closeModal({ cancelled: true });
+      };
+    }
+
+    function initExtension() {
+      window.WlExtension.initialize({
+        buttons: {
+          "attendance-view": [
+            {
+              icon_url: "https://img.icons8.com/material-sharp/15/000000/print.png",
+              text: "IMPRIMIR",
+              callback: (atendimento) => {
+
+                const modalUrl =
+                  "https://avsysgeo-mariaeduarda.github.io/IMPRIMIR_AVS_CHAT/?mode=modal&v=" +
+                  Date.now();
+
+                window.WlExtension.modal({
+                  title: "IMPRIMIR",
+                  url: modalUrl,
+                  maxWidth: "450px",
+                  height: "300px",
+
+                  callback: async (ret) => {
+                    console.log("RETORNO MODAL:", ret);
+
+                    if (!ret || ret.cancelled) return;
+
+                    let userInfo = {};
+                    try {
+                      userInfo = await window.WlExtension.getInfoUser();
+                    } catch (e) { }
+
+                    const payload = {
+                      tipo: ret.action,
+                      data: ret.data || "",
+
+                      attendanceId: atendimento?.atendimentoId ?? "",
+                      contactId: atendimento?.contactId ?? atendimento?.contact?.id ?? "",
+                      channelId: atendimento?.channelId ?? atendimento?.channel?.id ?? "",
+                      organizationId: atendimento?.organizationId ?? atendimento?.organization?.id ?? "",
+                      sectorId: atendimento?.sectorId ?? atendimento?.sector?.id ?? "",
+
+                      userId: userInfo?.userId || "",
+                      systemKey: userInfo?.systemKey || "",
+
+                      numero: numero,
+                      chatId: chatId,
+                      tokenAVS: tokenAVS
+                    };
+
+                    try {
+
+                      const webhookUrl = N8N_WEBHOOK_URL;
+
+                      console.log("WEBHOOK ESCOLHIDO:", webhookUrl);
+
+                      const resposta = await chamarN8n(payload, webhookUrl);
+
+                      const titulo =
+                        ret.action === "data"
+                          ? "Histórico de " + ret.data
+                          : "Histórico de hoje";
+
+                      imprimirTexto(resposta, titulo);
+
+                      window.WlExtension.alert({
+                        message: "Impressão enviada!",
+                        variant: "success"
+                      });
+
+                    } catch (e) {
+                      window.WlExtension.alert({
+                        message: "Falhou ao imprimir: " + String(e?.message || e),
+                        variant: "error"
+                      });
+                    }
+                  }
+
+                });
+              }
+            }
+          ]
+        }
+      });
+    }
+
+    if (getParam("mode") === "modal") {
+      renderModal();
+    } else {
+      initExtension();
+    }
+  </script>
 
 </body>
 
