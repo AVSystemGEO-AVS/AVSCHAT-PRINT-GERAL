@@ -129,162 +129,78 @@
       doc.write(html);
       doc.close();
     }
-
+    
     function renderModal() {
-      document.body.innerHTML = `
-        <style>
-          body { 
-            font-family: Arial, Helvetica, sans-serif; 
-            font-size: 14px; 
-            margin: 0;
-          }
-          .container { 
-            padding: 16px; 
-            max-width: 350px; 
-            margin: 0 auto; 
-          }
-          .actions { 
-            display: flex; 
-            gap: 10px; 
-            margin-bottom: 16px; 
-            flex-wrap: wrap;
-          }
-          button {
-            padding: 8px;
-            width: 160px;
-            cursor: pointer;
-            background-color: #192d3e;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-          }
-          input {
-            width: 100%;
-            padding: 8px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            box-sizing: border-box;
-          }
-          .box { margin-top: 16px; display:none; }
-          .row { 
-            display: flex; 
-            gap: 10px; 
-            margin-top: 12px; 
-            flex-wrap: wrap;
-          }
-          .msg { 
-            margin-top: 10px; 
-            color: #b00020; 
-            font-size: 13px; 
-            min-height: 18px; 
-          }
-        </style>
+      document.body.innerHTML = "";
     
-        <div class="container">
-          <div class="actions">
-            <button id="btn-hoje">HOJE</button>
-            <button id="btn-anteriores">DIAS ANTERIORES</button>
-            <button id="btn-passados">DIAS PASSADOS</button>
-          </div>
+      document.body.style.fontFamily = "Arial, Helvetica, sans-serif";
+      document.body.style.fontSize = "14px";
+      document.body.style.margin = "0";
+      document.body.style.padding = "15px";
     
-          <!-- HOJE -->
-          <div id="box-hoje" class="box">
-            <p>Será impresso o histórico de hoje.</p>
-            <div class="row">
-              <button id="confirm-hoje">CONFIRMAR</button>
-              <button id="cancel-hoje">CANCELAR</button>
-            </div>
-          </div>
+      // TÍTULO
+      const titulo = document.createElement("div");
+      titulo.innerText = "Informe a data inicial e final (DD/MM/AA)";
+      titulo.style.marginBottom = "10px";
+      document.body.appendChild(titulo);
     
-          <!-- DIAS ANTERIORES (1 data específica) -->
-          <div id="box-anteriores" class="box">
-            <p>Informe a data (DD/MM/AA)</p>
-            <input id="input-anterior" maxlength="8" placeholder="DD/MM/AA" />
-            <div class="row">
-              <button id="confirm-anterior">CONFIRMAR</button>
-              <button id="cancel-anterior">CANCELAR</button>
-            </div>
-            <div id="msg-anterior" class="msg"></div>
-          </div>
+      // INPUT INICIO
+      const inputInicio = document.createElement("input");
+      inputInicio.placeholder = "Data início (DD/MM/AA)";
+      inputInicio.style.display = "block";
+      inputInicio.style.width = "100%";
+      inputInicio.style.marginBottom = "8px";
+      inputInicio.style.padding = "6px";
+      inputInicio.maxLength = 8;
     
-          <!-- DIAS PASSADOS (quantidade de dias) -->
-          <div id="box-passados" class="box">
-            <p>Informe quantos dias anteriores deseja consultar</p>
-            <input id="input-passados" type="number" placeholder="Ex: 7" />
-            <div class="row">
-              <button id="confirm-passados">CONFIRMAR</button>
-              <button id="cancel-passados">CANCELAR</button>
-            </div>
-            <div id="msg-passados" class="msg"></div>
-          </div>
+      // INPUT FIM
+      const inputFim = document.createElement("input");
+      inputFim.placeholder = "Data fim (DD/MM/AA)";
+      inputFim.style.display = "block";
+      inputFim.style.width = "100%";
+      inputFim.style.marginBottom = "12px";
+      inputFim.style.padding = "6px";
+      inputFim.maxLength = 8;
     
-        </div>
-      `;
+      document.body.appendChild(inputInicio);
+      document.body.appendChild(inputFim);
     
-      const boxHoje = document.getElementById("box-hoje");
-      const boxAnteriores = document.getElementById("box-anteriores");
-      const boxPassados = document.getElementById("box-passados");
+      // BOTÃO CONFIRMAR
+      const btnConfirmar = document.createElement("button");
+      btnConfirmar.innerText = "CONFIRMAR";
+      btnConfirmar.style.width = "100%";
+      btnConfirmar.style.padding = "8px";
+      btnConfirmar.style.background = "#192d3e";
+      btnConfirmar.style.color = "#fff";
+      btnConfirmar.style.border = "none";
+      btnConfirmar.style.marginBottom = "6px";
     
-      function esconderTodos() {
-        boxHoje.style.display = "none";
-        boxAnteriores.style.display = "none";
-        boxPassados.style.display = "none";
-      }
+      // BOTÃO CANCELAR
+      const btnCancelar = document.createElement("button");
+      btnCancelar.innerText = "CANCELAR";
+      btnCancelar.style.width = "100%";
+      btnCancelar.style.padding = "8px";
     
-      document.getElementById("btn-hoje").onclick = () => {
-        esconderTodos();
-        boxHoje.style.display = "block";
-      };
+      document.body.appendChild(btnConfirmar);
+      document.body.appendChild(btnCancelar);
     
-      document.getElementById("btn-anteriores").onclick = () => {
-        esconderTodos();
-        boxAnteriores.style.display = "block";
-      };
-    
-      document.getElementById("btn-passados").onclick = () => {
-        esconderTodos();
-        boxPassados.style.display = "block";
-      };
-    
-      document.getElementById("cancel-hoje").onclick =
-      document.getElementById("cancel-anterior").onclick =
-      document.getElementById("cancel-passados").onclick = () => {
+      // EVENTOS
+      btnCancelar.onclick = () => {
         window.WlExtension.closeModal({ cancelled: true });
       };
     
-      document.getElementById("confirm-hoje").onclick = () => {
-        window.WlExtension.closeModal({ action: "hoje" });
-      };
-    
-      document.getElementById("confirm-anterior").onclick = () => {
-        const valor = document.getElementById("input-anterior").value.trim();
+      btnConfirmar.onclick = () => {
         const regex = /^\d{2}\/\d{2}\/\d{2}$/;
     
-        if (!regex.test(valor)) {
-          document.getElementById("msg-anterior").textContent =
-            "Use formato DD/MM/AA";
+        if (!regex.test(inputInicio.value) || !regex.test(inputFim.value)) {
+          alert("Datas inválidas. Use DD/MM/AA.");
           return;
         }
     
         window.WlExtension.closeModal({
-          action: "data_unica",
-          data: valor
-        });
-      };
-    
-      document.getElementById("confirm-passados").onclick = () => {
-        const dias = document.getElementById("input-passados").value.trim();
-    
-        if (!dias || parseInt(dias) <= 0) {
-          document.getElementById("msg-passados").textContent =
-            "Informe um número válido.";
-          return;
-        }
-    
-        window.WlExtension.closeModal({
-          action: "dias_passados",
-          quantidade: parseInt(dias)
+          action: "periodo",
+          dataInicio: inputInicio.value,
+          dataFim: inputFim.value
         });
       };
     }
