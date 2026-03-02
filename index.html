@@ -167,30 +167,43 @@
         </div>
 
         <div id="box-data" class="box" style="display:none;">
+                
+            <p>Informe a data de início e fim (DD/MM/AA)</p> 
         
-            <p>Informe a data no formato: DD/MM/AA</p>
-            
             <input 
-              id="input-data"
+              id="input-data-inicio"
               type="tel"
               pattern="\d{2}/\d{2}/\d{2}"
               inputmode="numeric"
               autocomplete="new-password"
-              placeholder="DD/MM/AA"
+              placeholder="Data início (DD/MM/AA)"
               maxlength="8"
+            /> 
+        
+            <input 
+              id="input-data-fim"
+              type="tel"
+              pattern="\d{2}/\d{2}/\d{2}"
+              inputmode="numeric"
+              autocomplete="new-password"
+              placeholder="Data fim (DD/MM/AA)"
+              maxlength="8"
+              style="margin-top:8px;"
             />
-
+        
             <div class="row">
-            <button id="btn-confirmar-data" type="button">CONFIRMAR</button>
-            <button id="btn-cancelar-data" type="button">CANCELAR</button>
+              <button id="btn-confirmar-data" type="button">CONFIRMAR</button>
+              <button id="btn-cancelar-data" type="button">CANCELAR</button>
             </div>
-
+        
             <div id="msg-data" class="msg"></div>
         </div>
+        
         </div>
     `;
 
-      const inputData = document.getElementById("input-data");
+      const inputInicio = document.getElementById("input-data-inicio");
+      const inputFim = document.getElementById("input-data-fim");
       const msgDataEl = document.getElementById("msg-data");
       const msgHojeEl = document.getElementById("msg-hoje");
       const boxHoje = document.getElementById("box-hoje");
@@ -199,31 +212,37 @@
       function setMsgData(t) { msgDataEl.textContent = t || ""; }
       function setMsgHoje(t) { msgHojeEl.textContent = t || ""; }
 
-      inputData.addEventListener("input", function () {
-        let numbers = this.value.replace(/\D/g, "");
+      function aplicarMascara(input) {
+        input.addEventListener("input", function () {
 
-        if (numbers.length > 8) numbers = numbers.substring(0, 8);
+          let numbers = this.value.replace(/\D/g, "");
 
-        let result = "";
+          if (numbers.length > 8) numbers = numbers.substring(0, 8);
 
-        if (numbers.length >= 2) {
-          result = numbers.substring(0, 2);
-        } else {
-          result = numbers;
-        }
+          let result = "";
 
-        if (numbers.length >= 4) {
-          result += "/" + numbers.substring(2, 4);
-        } else if (numbers.length > 2) {
-          result += "/" + numbers.substring(2);
-        }
+          if (numbers.length >= 2) {
+            result = numbers.substring(0, 2);
+          } else {
+            result = numbers;
+          }
 
-        if (numbers.length >= 5) {
-          result += "/" + numbers.substring(4, 8);
-        }
+          if (numbers.length >= 4) {
+            result += "/" + numbers.substring(2, 4);
+          } else if (numbers.length > 2) {
+            result += "/" + numbers.substring(2);
+          }
 
-        this.value = result;
-      });
+          if (numbers.length >= 5) {
+            result += "/" + numbers.substring(4, 8);
+          }
+
+          this.value = result;
+        });
+      }
+
+      aplicarMascara(inputInicio);
+      aplicarMascara(inputFim);
 
       document.getElementById("btn-hoje").onclick = () => {
         boxData.style.display = "none";
@@ -246,16 +265,21 @@
       };
 
       document.getElementById("btn-confirmar-data").onclick = () => {
-        const dataDigitada = inputData.value.trim();
 
-        if (!/^\d{2}\/\d{2}\/\d{2}$/.test(dataDigitada)) {
-          setMsgData("Data inválida. Use DD/MM/AA");
+        const dataInicio = inputInicio.value.trim();
+        const dataFim = inputFim.value.trim();
+
+        const regex = /^\d{2}\/\d{2}\/\d{2}$/;
+
+        if (!regex.test(dataInicio) || !regex.test(dataFim)) {
+          setMsgData("Datas inválidas. Use DD/MM/AA em ambos os campos.");
           return;
         }
 
         window.WlExtension.closeModal({
-          action: "data",
-          data: dataDigitada
+          action: "periodo",
+          dataInicio: dataInicio,
+          dataFim: dataFim
         });
       };
 
@@ -296,6 +320,8 @@
                     const payload = {
                       tipo: ret.action,
                       data: ret.data || "",
+                      dataInicio: ret.dataInicio || "",
+                      dataFim: ret.dataFim || "",
 
                       attendanceId: atendimento?.atendimentoId ?? "",
                       contactId: atendimento?.contactId ?? atendimento?.contact?.id ?? "",
@@ -319,10 +345,14 @@
 
                       const resposta = await chamarN8n(payload, webhookUrl);
 
-                      const titulo =
-                        ret.action === "data"
-                          ? "Histórico de " + ret.data
-                          : "Histórico de hoje";
+                      let titulo = "Histórico";
+
+                      if (ret.action === "periodo") {
+                        titulo = `Histórico de ${ret.dataInicio} até ${ret.dataFim}`;
+                      }
+                      else if (ret.action === "data") {
+                        titulo = "Histórico de " + ret.data;
+                      }
 
                       imprimirTexto(resposta, titulo);
 
