@@ -180,16 +180,6 @@
               maxlength="8"
             />
             
-            <input 
-              id="input-data"
-              type="tel"
-              pattern="\d{2}/\d{2}/\d{2}"
-              inputmode="numeric"
-              autocomplete="new-password"
-              placeholder="DD/MM/AA"
-              maxlength="8"
-            />
-
             <div class="row">
             <button id="btn-confirmar-data" type="button">CONFIRMAR</button>
             <button id="btn-cancelar-data" type="button">CANCELAR</button>
@@ -291,7 +281,7 @@
                   title: "IMPRIMIR",
                   url: modalUrl,
                   maxWidth: "450px",
-                  height: "450px",
+                  height: "350px",
 
                   callback: async (ret) => {
                     console.log("RETORNO MODAL:", ret);
