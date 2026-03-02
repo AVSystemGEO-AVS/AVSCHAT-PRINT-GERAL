@@ -131,155 +131,136 @@
     }
 
     function renderModal() {
-      document.body.innerHTML = "";
-      document.body.style.fontFamily = "Arial, Helvetica, sans-serif";
-      document.body.style.fontSize = "14px";
-      document.body.style.margin = "0";
-    
-      const container = document.createElement("div");
-      container.style.padding = "16px";
-      container.style.maxWidth = "350px";
-      container.style.margin = "0 auto";
-    
-      const actions = document.createElement("div");
-      actions.style.display = "flex";
-      actions.style.gap = "16px";
-      actions.style.marginBottom = "16px";
-    
-      const btnHoje = document.createElement("button");
-      btnHoje.textContent = "HOJE";
-    
-      const btnAnteriores = document.createElement("button");
-      btnAnteriores.textContent = "DIAS ANTERIORES";
-    
-      [btnHoje, btnAnteriores].forEach(btn => {
-        btn.style.padding = "8px";
-        btn.style.width = "160px";
-        btn.style.background = "#192d3e";
-        btn.style.color = "#fff";
-        btn.style.border = "none";
-        btn.style.borderRadius = "6px";
-        btn.style.cursor = "pointer";
-      });
-    
-      actions.appendChild(btnHoje);
-      actions.appendChild(btnAnteriores);
-      container.appendChild(actions);
+      document.body.innerHTML = `
+        <style>
+        body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #000; }
+        .container { padding: 16px; width: 100%; max-width: 350px; margin: 0 auto; }
+        .actions { display: flex; gap: 16px; margin-bottom: 16px; justify-content: flex-start; }
+        button {
+            padding: 8px;
+            width: 160px;
+            cursor: pointer;
+            background-color: #192d3e;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .box { margin-top: 16px; }
+        .row { display: flex; gap: 16px; margin-top: 16px; justify-content: flex-start; }
+        .msg { margin-top: 10px; color: #b00020; font-size: 13px; min-height: 18px; white-space: pre-wrap; }
+        </style>
 
-      const boxHoje = document.createElement("div");
-      boxHoje.style.display = "none";
-    
-      const textoHoje = document.createElement("p");
-      textoHoje.textContent = "Será impresso o histórico de hoje.";
-    
-      const btnConfirmarHoje = document.createElement("button");
-      btnConfirmarHoje.textContent = "CONFIRMAR";
-    
-      const btnCancelarHoje = document.createElement("button");
-      btnCancelarHoje.textContent = "CANCELAR";
-    
-      [btnConfirmarHoje, btnCancelarHoje].forEach(btn => {
-        btn.style.padding = "8px";
-        btn.style.width = "160px";
-        btn.style.background = "#192d3e";
-        btn.style.color = "#fff";
-        btn.style.border = "none";
-        btn.style.borderRadius = "6px";
-        btn.style.cursor = "pointer";
-        btn.style.marginRight = "8px";
-      });
-    
-      boxHoje.appendChild(textoHoje);
-      boxHoje.appendChild(btnConfirmarHoje);
-      boxHoje.appendChild(btnCancelarHoje);
-      container.appendChild(boxHoje);
+        <div class="container">
+        <div class="actions">
+            <button id="btn-hoje" type="button">HOJE</button>
+            <button id="btn-anteriores" type="button">DIAS ANTERIORES</button>
+        </div>
 
-      const boxData = document.createElement("div");
-      boxData.style.display = "none";
-      boxData.style.marginTop = "16px";
-    
-      const textoData = document.createElement("p");
-      textoData.textContent = "Informe a data de início e fim (DD/MM/AA)";
-    
-      const inputInicio = document.createElement("input");
-      inputInicio.placeholder = "Data início (DD/MM/AA)";
-      inputInicio.maxLength = 8;
-    
-      const inputFim = document.createElement("input");
-      inputFim.placeholder = "Data fim (DD/MM/AA)";
-      inputFim.maxLength = 8;
-      inputFim.style.marginTop = "8px";
-    
-      [inputInicio, inputFim].forEach(inp => {
-        inp.style.width = "100%";
-        inp.style.padding = "8px";
-        inp.style.borderRadius = "6px";
-        inp.style.border = "1px solid #ccc";
-        inp.style.boxSizing = "border-box";
-      });
-    
-      const btnConfirmarData = document.createElement("button");
-      btnConfirmarData.textContent = "CONFIRMAR";
-    
-      const btnCancelarData = document.createElement("button");
-      btnCancelarData.textContent = "CANCELAR";
-    
-      [btnConfirmarData, btnCancelarData].forEach(btn => {
-        btn.style.padding = "8px";
-        btn.style.width = "160px";
-        btn.style.background = "#192d3e";
-        btn.style.color = "#fff";
-        btn.style.border = "none";
-        btn.style.borderRadius = "6px";
-        btn.style.cursor = "pointer";
-        btn.style.marginTop = "12px";
-        btn.style.marginRight = "8px";
-      });
-    
-      boxData.appendChild(textoData);
-      boxData.appendChild(inputInicio);
-      boxData.appendChild(inputFim);
-      boxData.appendChild(btnConfirmarData);
-      boxData.appendChild(btnCancelarData);
-      container.appendChild(boxData);
-    
-      document.body.appendChild(container);
+        <div id="box-hoje" class="box" style="display:none;">
+            <p>Será impresso o histórico de hoje.</p>
+            <div class="row">
+            <button id="btn-confirmar-hoje" type="button">CONFIRMAR</button>
+            <button id="btn-cancelar-hoje" type="button">CANCELAR</button>
+            </div>
+            <div id="msg-hoje" class="msg"></div>
+        </div>
 
-      btnHoje.onclick = () => {
+        <div id="box-data" class="box" style="display:none;">
+        
+            <p>Informe a data no formato: DD/MM/AA</p>
+            
+            <input 
+              id="input-data"
+              type="tel"
+              pattern="\d{2}/\d{2}/\d{2}"
+              inputmode="numeric"
+              autocomplete="new-password"
+              placeholder="DD/MM/AA"
+              maxlength="8"
+            />
+
+            <div class="row">
+            <button id="btn-confirmar-data" type="button">CONFIRMAR</button>
+            <button id="btn-cancelar-data" type="button">CANCELAR</button>
+            </div>
+
+            <div id="msg-data" class="msg"></div>
+        </div>
+        </div>
+    `;
+
+      const inputData = document.getElementById("input-data");
+      const msgDataEl = document.getElementById("msg-data");
+      const msgHojeEl = document.getElementById("msg-hoje");
+      const boxHoje = document.getElementById("box-hoje");
+      const boxData = document.getElementById("box-data");
+
+      function setMsgData(t) { msgDataEl.textContent = t || ""; }
+      function setMsgHoje(t) { msgHojeEl.textContent = t || ""; }
+
+      inputData.addEventListener("input", function () {
+        let numbers = this.value.replace(/\D/g, "");
+
+        if (numbers.length > 8) numbers = numbers.substring(0, 8);
+
+        let result = "";
+
+        if (numbers.length >= 2) {
+          result = numbers.substring(0, 2);
+        } else {
+          result = numbers;
+        }
+
+        if (numbers.length >= 4) {
+          result += "/" + numbers.substring(2, 4);
+        } else if (numbers.length > 2) {
+          result += "/" + numbers.substring(2);
+        }
+
+        if (numbers.length >= 5) {
+          result += "/" + numbers.substring(4, 8);
+        }
+
+        this.value = result;
+      });
+
+      document.getElementById("btn-hoje").onclick = () => {
         boxData.style.display = "none";
         boxHoje.style.display = "block";
+        setMsgHoje("");
       };
-    
-      btnAnteriores.onclick = () => {
+
+      document.getElementById("btn-anteriores").onclick = () => {
         boxHoje.style.display = "none";
         boxData.style.display = "block";
+        setMsgData("");
       };
-    
-      btnCancelarHoje.onclick = () => {
+
+      document.getElementById("btn-cancelar-hoje").onclick = () => {
         window.WlExtension.closeModal({ cancelled: true });
       };
-    
-      btnConfirmarHoje.onclick = () => {
+
+      document.getElementById("btn-confirmar-hoje").onclick = () => {
         window.WlExtension.closeModal({ action: "hoje" });
       };
-    
-      btnCancelarData.onclick = () => {
-        window.WlExtension.closeModal({ cancelled: true });
-      };
-    
-      btnConfirmarData.onclick = () => {
-        const regex = /^\d{2}\/\d{2}\/\d{2}$/;
-    
-        if (!regex.test(inputInicio.value) || !regex.test(inputFim.value)) {
-          alert("Datas inválidas. Use DD/MM/AA.");
+
+      document.getElementById("btn-confirmar-data").onclick = () => {
+        const dataDigitada = inputData.value.trim();
+
+        if (!/^\d{2}\/\d{2}\/\d{2}$/.test(dataDigitada)) {
+          setMsgData("Data inválida. Use DD/MM/AA");
           return;
         }
-    
+
         window.WlExtension.closeModal({
-          action: "periodo",
-          dataInicio: inputInicio.value,
-          dataFim: inputFim.value
+          action: "data",
+          data: dataDigitada
         });
+      };
+
+      document.getElementById("btn-cancelar-data").onclick = () => {
+        window.WlExtension.closeModal({ cancelled: true });
       };
     }
 
@@ -315,8 +296,6 @@
                     const payload = {
                       tipo: ret.action,
                       data: ret.data || "",
-                      dataInicio: ret.dataInicio || "",
-                      dataFim: ret.dataFim || "",
 
                       attendanceId: atendimento?.atendimentoId ?? "",
                       contactId: atendimento?.contactId ?? atendimento?.contact?.id ?? "",
@@ -340,14 +319,10 @@
 
                       const resposta = await chamarN8n(payload, webhookUrl);
 
-                      let titulo = "Histórico";
-
-                      if (ret.action === "periodo") {
-                        titulo = `Histórico de ${ret.dataInicio} até ${ret.dataFim}`;
-                      }
-                      else if (ret.action === "data") {
-                        titulo = "Histórico de " + ret.data;
-                      }
+                      const titulo =
+                        ret.action === "data"
+                          ? "Histórico de " + ret.data
+                          : "Histórico de hoje";
 
                       imprimirTexto(resposta, titulo);
 
