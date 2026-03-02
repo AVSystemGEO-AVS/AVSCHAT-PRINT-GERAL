@@ -133,134 +133,159 @@
     function renderModal() {
       document.body.innerHTML = `
         <style>
-        body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #000; }
-        .container { padding: 16px; width: 100%; max-width: 350px; margin: 0 auto; }
-        .actions { display: flex; gap: 16px; margin-bottom: 16px; justify-content: flex-start; }
-        button {
+          body { 
+            font-family: Arial, Helvetica, sans-serif; 
+            font-size: 14px; 
+            margin: 0;
+          }
+          .container { 
+            padding: 16px; 
+            max-width: 350px; 
+            margin: 0 auto; 
+          }
+          .actions { 
+            display: flex; 
+            gap: 10px; 
+            margin-bottom: 16px; 
+            flex-wrap: wrap;
+          }
+          button {
             padding: 8px;
             width: 160px;
             cursor: pointer;
             background-color: #192d3e;
-            color: #ffffff;
+            color: #fff;
             border: none;
             border-radius: 6px;
             font-size: 14px;
-        }
-        .box { margin-top: 16px; }
-        .row { display: flex; gap: 16px; margin-top: 16px; justify-content: flex-start; }
-        .msg { margin-top: 10px; color: #b00020; font-size: 13px; min-height: 18px; white-space: pre-wrap; }
+          }
+          input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+          }
+          .box { margin-top: 16px; display:none; }
+          .row { 
+            display: flex; 
+            gap: 10px; 
+            margin-top: 12px; 
+            flex-wrap: wrap;
+          }
+          .msg { 
+            margin-top: 10px; 
+            color: #b00020; 
+            font-size: 13px; 
+            min-height: 18px; 
+          }
         </style>
-
+    
         <div class="container">
-        <div class="actions">
-            <button id="btn-hoje" type="button">HOJE</button>
-            <button id="btn-anteriores" type="button">DIAS ANTERIORES</button>
-        </div>
-
-        <div id="box-hoje" class="box" style="display:none;">
+          <div class="actions">
+            <button id="btn-hoje">HOJE</button>
+            <button id="btn-anteriores">DIAS ANTERIORES</button>
+            <button id="btn-passados">DIAS PASSADOS</button>
+          </div>
+    
+          <!-- HOJE -->
+          <div id="box-hoje" class="box">
             <p>Será impresso o histórico de hoje.</p>
             <div class="row">
-            <button id="btn-confirmar-hoje" type="button">CONFIRMAR</button>
-            <button id="btn-cancelar-hoje" type="button">CANCELAR</button>
+              <button id="confirm-hoje">CONFIRMAR</button>
+              <button id="cancel-hoje">CANCELAR</button>
             </div>
-            <div id="msg-hoje" class="msg"></div>
-        </div>
-
-        <div id="box-data" class="box" style="display:none;">
-        
-            <p>Informe a data no formato: DD/MM/AA</p>
-            
-            <input 
-              id="input-data"
-              type="tel"
-              pattern="\d{2}/\d{2}/\d{2}"
-              inputmode="numeric"
-              autocomplete="new-password"
-              placeholder="DD/MM/AA"
-              maxlength="8"
-            />
-            
+          </div>
+    
+          <!-- DIAS ANTERIORES (1 data específica) -->
+          <div id="box-anteriores" class="box">
+            <p>Informe a data (DD/MM/AA)</p>
+            <input id="input-anterior" maxlength="8" placeholder="DD/MM/AA" />
             <div class="row">
-            <button id="btn-confirmar-data" type="button">CONFIRMAR</button>
-            <button id="btn-cancelar-data" type="button">CANCELAR</button>
+              <button id="confirm-anterior">CONFIRMAR</button>
+              <button id="cancel-anterior">CANCELAR</button>
             </div>
-
-            <div id="msg-data" class="msg"></div>
+            <div id="msg-anterior" class="msg"></div>
+          </div>
+    
+          <!-- DIAS PASSADOS (quantidade de dias) -->
+          <div id="box-passados" class="box">
+            <p>Informe quantos dias anteriores deseja consultar</p>
+            <input id="input-passados" type="number" placeholder="Ex: 7" />
+            <div class="row">
+              <button id="confirm-passados">CONFIRMAR</button>
+              <button id="cancel-passados">CANCELAR</button>
+            </div>
+            <div id="msg-passados" class="msg"></div>
+          </div>
+    
         </div>
-        </div>
-    `;
-
-      const inputData = document.getElementById("input-data");
-      const msgDataEl = document.getElementById("msg-data");
-      const msgHojeEl = document.getElementById("msg-hoje");
+      `;
+    
       const boxHoje = document.getElementById("box-hoje");
-      const boxData = document.getElementById("box-data");
-
-      function setMsgData(t) { msgDataEl.textContent = t || ""; }
-      function setMsgHoje(t) { msgHojeEl.textContent = t || ""; }
-
-      inputData.addEventListener("input", function () {
-        let numbers = this.value.replace(/\D/g, "");
-
-        if (numbers.length > 8) numbers = numbers.substring(0, 8);
-
-        let result = "";
-
-        if (numbers.length >= 2) {
-          result = numbers.substring(0, 2);
-        } else {
-          result = numbers;
-        }
-
-        if (numbers.length >= 4) {
-          result += "/" + numbers.substring(2, 4);
-        } else if (numbers.length > 2) {
-          result += "/" + numbers.substring(2);
-        }
-
-        if (numbers.length >= 5) {
-          result += "/" + numbers.substring(4, 8);
-        }
-
-        this.value = result;
-      });
-
-      document.getElementById("btn-hoje").onclick = () => {
-        boxData.style.display = "none";
-        boxHoje.style.display = "block";
-        setMsgHoje("");
-      };
-
-      document.getElementById("btn-anteriores").onclick = () => {
+      const boxAnteriores = document.getElementById("box-anteriores");
+      const boxPassados = document.getElementById("box-passados");
+    
+      function esconderTodos() {
         boxHoje.style.display = "none";
-        boxData.style.display = "block";
-        setMsgData("");
+        boxAnteriores.style.display = "none";
+        boxPassados.style.display = "none";
+      }
+    
+      document.getElementById("btn-hoje").onclick = () => {
+        esconderTodos();
+        boxHoje.style.display = "block";
       };
-
-      document.getElementById("btn-cancelar-hoje").onclick = () => {
+    
+      document.getElementById("btn-anteriores").onclick = () => {
+        esconderTodos();
+        boxAnteriores.style.display = "block";
+      };
+    
+      document.getElementById("btn-passados").onclick = () => {
+        esconderTodos();
+        boxPassados.style.display = "block";
+      };
+    
+      document.getElementById("cancel-hoje").onclick =
+      document.getElementById("cancel-anterior").onclick =
+      document.getElementById("cancel-passados").onclick = () => {
         window.WlExtension.closeModal({ cancelled: true });
       };
-
-      document.getElementById("btn-confirmar-hoje").onclick = () => {
+    
+      document.getElementById("confirm-hoje").onclick = () => {
         window.WlExtension.closeModal({ action: "hoje" });
       };
-
-      document.getElementById("btn-confirmar-data").onclick = () => {
-        const dataDigitada = inputData.value.trim();
-
-        if (!/^\d{2}\/\d{2}\/\d{2}$/.test(dataDigitada)) {
-          setMsgData("Data inválida. Use DD/MM/AA");
+    
+      document.getElementById("confirm-anterior").onclick = () => {
+        const valor = document.getElementById("input-anterior").value.trim();
+        const regex = /^\d{2}\/\d{2}\/\d{2}$/;
+    
+        if (!regex.test(valor)) {
+          document.getElementById("msg-anterior").textContent =
+            "Use formato DD/MM/AA";
           return;
         }
-
+    
         window.WlExtension.closeModal({
-          action: "data",
-          data: dataDigitada
+          action: "data_unica",
+          data: valor
         });
       };
-
-      document.getElementById("btn-cancelar-data").onclick = () => {
-        window.WlExtension.closeModal({ cancelled: true });
+    
+      document.getElementById("confirm-passados").onclick = () => {
+        const dias = document.getElementById("input-passados").value.trim();
+    
+        if (!dias || parseInt(dias) <= 0) {
+          document.getElementById("msg-passados").textContent =
+            "Informe um número válido.";
+          return;
+        }
+    
+        window.WlExtension.closeModal({
+          action: "dias_passados",
+          quantidade: parseInt(dias)
+        });
       };
     }
 
@@ -280,8 +305,8 @@
                 window.WlExtension.modal({
                   title: "IMPRIMIR",
                   url: modalUrl,
-                  maxWidth: "450px",
-                  height: "350px",
+                  maxWidth: "650px",
+                  height: "300px",
 
                   callback: async (ret) => {
                     console.log("RETORNO MODAL:", ret);
