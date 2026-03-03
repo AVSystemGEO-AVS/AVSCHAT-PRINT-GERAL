@@ -154,7 +154,8 @@
         <div class="container">
         <div class="actions">
             <button id="btn-hoje" type="button">HOJE</button>
-            <button id="btn-anteriores" type="button">DIAS ANTERIORES</button>
+            <button id="btn-anteriores" type="button">DIA PONTUAL</button>
+            <button id="btn-passados" type="button">DIAS PASSADOS</button>
         </div>
 
         <div id="box-hoje" class="box" style="display:none;">
@@ -166,8 +167,7 @@
             <div id="msg-hoje" class="msg"></div>
         </div>
 
-        <div id="box-data" class="box" style="display:none;">
-        
+        <div id="box-data" class="box" style="display:none;">        
             <p>Informe a data no formato: DD/MM/AA</p>
             
             <input 
@@ -187,6 +187,22 @@
 
             <div id="msg-data" class="msg"></div>
         </div>
+        
+        <div id="box-periodo" class="box" style="display:none;">
+        
+          <p>Informe o período (DD/MM/AA)</p>
+        
+          <input id="input-inicio" type="tel" placeholder="Data início" maxlength="8">
+          <input id="input-fim" type="tel" placeholder="Data fim" maxlength="8">
+        
+          <div class="row">
+            <button id="btn-confirmar-periodo" type="button">CONFIRMAR</button>
+            <button id="btn-cancelar-periodo" type="button">CANCELAR</button>
+          </div>
+        
+          <div id="msg-periodo" class="msg"></div>
+        </div>
+        
         </div>
     `;
 
@@ -195,7 +211,10 @@
       const msgHojeEl = document.getElementById("msg-hoje");
       const boxHoje = document.getElementById("box-hoje");
       const boxData = document.getElementById("box-data");
+      const boxPeriodo = document.getElementById("box-periodo");
+      const msgPeriodoEl = document.getElementById("msg-periodo");
 
+      function setMsgPeriodo(t) { msgPeriodoEl.textContent = t || ""; }
       function setMsgData(t) { msgDataEl.textContent = t || ""; }
       function setMsgHoje(t) { msgHojeEl.textContent = t || ""; }
 
@@ -237,6 +256,13 @@
         setMsgData("");
       };
 
+      document.getElementById("btn-passados").onclick = () => {
+        boxHoje.style.display = "none";
+        boxData.style.display = "none";
+        boxPeriodo.style.display = "block";
+        setMsgPeriodo("");
+      };
+
       document.getElementById("btn-cancelar-hoje").onclick = () => {
         window.WlExtension.closeModal({ cancelled: true });
       };
@@ -263,6 +289,27 @@
         window.WlExtension.closeModal({ cancelled: true });
       };
     }
+
+    document.getElementById("btn-confirmar-periodo").onclick = () => {
+      const inicio = document.getElementById("input-inicio").value.trim();
+      const fim = document.getElementById("input-fim").value.trim();
+
+      if (!/^\d{2}\/\d{2}\/\d{2}$/.test(inicio) ||
+        !/^\d{2}\/\d{2}\/\d{2}$/.test(fim)) {
+        setMsgPeriodo("Datas inválidas. Use DD/MM/AA");
+        return;
+      }
+
+      window.WlExtension.closeModal({
+        action: "periodo",
+        dataInicio: inicio,
+        dataFim: fim
+      });
+    };
+
+    document.getElementById("btn-cancelar-periodo").onclick = () => {
+      window.WlExtension.closeModal({ cancelled: true });
+    };
 
     function initExtension() {
       window.WlExtension.initialize({
@@ -296,6 +343,8 @@
                     const payload = {
                       tipo: ret.action,
                       data: ret.data || "",
+                      dataInicio: ret.dataInicio || "",
+                      dataFim: ret.dataFim || "",
 
                       attendanceId: atendimento?.atendimentoId ?? "",
                       contactId: atendimento?.contactId ?? atendimento?.contact?.id ?? "",
