@@ -133,183 +133,167 @@
     function renderModal() {
       document.body.innerHTML = `
         <style>
-        body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #000; }
-        .container { padding: 16px; width: 100%; max-width: 350px; margin: 0 auto; }
-        .actions { display: flex; gap: 16px; margin-bottom: 16px; justify-content: flex-start; }
-        button {
+          body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #000; }
+          .container { padding: 16px; width: 100%; max-width: 500px; margin: 0 auto; }
+          .actions { display: flex; gap: 10px; margin-bottom: 16px; }
+          button {
             padding: 8px;
-            width: 160px;
+            width: 150px;
             cursor: pointer;
             background-color: #192d3e;
             color: #ffffff;
             border: none;
             border-radius: 6px;
             font-size: 14px;
-        }
-        .box { margin-top: 16px; }
-        .row { display: flex; gap: 16px; margin-top: 16px; justify-content: flex-start; }
-        .msg { margin-top: 10px; color: #b00020; font-size: 13px; min-height: 18px; white-space: pre-wrap; }
+          }
+          .box { margin-top: 16px; }
+          .row { display: flex; gap: 10px; margin-top: 16px; }
+          .msg { margin-top: 10px; color: #b00020; font-size: 13px; min-height: 18px; white-space: pre-wrap; }
+          input {
+            width: 100%;
+            padding: 6px;
+            margin-top: 6px;
+            box-sizing: border-box;
+          }
         </style>
-
+    
         <div class="container">
-        <div class="actions">
+    
+          <div class="actions">
             <button id="btn-hoje" type="button">HOJE</button>
             <button id="btn-anteriores" type="button">DIA PONTUAL</button>
             <button id="btn-passados" type="button">DIAS PASSADOS</button>
-        </div>
-
-        <div id="box-hoje" class="box" style="display:none;">
+          </div>
+    
+          <div id="box-hoje" class="box" style="display:none;">
             <p>Será impresso o histórico de hoje.</p>
             <div class="row">
-            <button id="btn-confirmar-hoje" type="button">CONFIRMAR</button>
-            <button id="btn-cancelar-hoje" type="button">CANCELAR</button>
+              <button id="btn-confirmar-hoje" type="button">CONFIRMAR</button>
+              <button id="btn-cancelar-hoje" type="button">CANCELAR</button>
             </div>
             <div id="msg-hoje" class="msg"></div>
-        </div>
-
-        <div id="box-data" class="box" style="display:none;">        
-            <p>Informe a data no formato: DD/MM/AA</p>
-            
-            <input 
-              id="input-data"
-              type="tel"
-              pattern="\d{2}/\d{2}/\d{2}"
-              inputmode="numeric"
-              autocomplete="new-password"
-              placeholder="DD/MM/AA"
-              maxlength="8"
-            />
-
-            <div class="row">
-            <button id="btn-confirmar-data" type="button">CONFIRMAR</button>
-            <button id="btn-cancelar-data" type="button">CANCELAR</button>
-            </div>
-
-            <div id="msg-data" class="msg"></div>
-        </div>
-        
-        <div id="box-periodo" class="box" style="display:none;">
-        
-          <p>Informe o período (DD/MM/AA)</p>
-        
-          <input id="input-inicio" type="tel" placeholder="Data início" maxlength="8">
-          <input id="input-fim" type="tel" placeholder="Data fim" maxlength="8">
-        
-          <div class="row">
-            <button id="btn-confirmar-periodo" type="button">CONFIRMAR</button>
-            <button id="btn-cancelar-periodo" type="button">CANCELAR</button>
           </div>
-        
-          <div id="msg-periodo" class="msg"></div>
+    
+          <div id="box-data" class="box" style="display:none;">
+            <p>Informe a data no formato: DD/MM/AA</p>
+            <input id="input-data" type="tel" maxlength="8" placeholder="DD/MM/AA" />
+            <div class="row">
+              <button id="btn-confirmar-data" type="button">CONFIRMAR</button>
+              <button id="btn-cancelar-data" type="button">CANCELAR</button>
+            </div>
+            <div id="msg-data" class="msg"></div>
+          </div>
+    
+          <div id="box-periodo" class="box" style="display:none;">
+            <p>Informe o período (DD/MM/AA)</p>
+            <input id="input-inicio" type="tel" maxlength="8" placeholder="Data início" />
+            <input id="input-fim" type="tel" maxlength="8" placeholder="Data fim" />
+            <div class="row">
+              <button id="btn-confirmar-periodo" type="button">CONFIRMAR</button>
+              <button id="btn-cancelar-periodo" type="button">CANCELAR</button>
+            </div>
+            <div id="msg-periodo" class="msg"></div>
+          </div>
+    
         </div>
-        
-        </div>
-    `;
-
-      const inputData = document.getElementById("input-data");
-      const msgDataEl = document.getElementById("msg-data");
-      const msgHojeEl = document.getElementById("msg-hoje");
+      `;
+    
       const boxHoje = document.getElementById("box-hoje");
       const boxData = document.getElementById("box-data");
       const boxPeriodo = document.getElementById("box-periodo");
-      const msgPeriodoEl = document.getElementById("msg-periodo");
-
-      function setMsgPeriodo(t) { msgPeriodoEl.textContent = t || ""; }
-      function setMsgData(t) { msgDataEl.textContent = t || ""; }
-      function setMsgHoje(t) { msgHojeEl.textContent = t || ""; }
-
-      inputData.addEventListener("input", function () {
-        let numbers = this.value.replace(/\D/g, "");
-
-        if (numbers.length > 8) numbers = numbers.substring(0, 8);
-
-        let result = "";
-
-        if (numbers.length >= 2) {
-          result = numbers.substring(0, 2);
-        } else {
-          result = numbers;
-        }
-
-        if (numbers.length >= 4) {
-          result += "/" + numbers.substring(2, 4);
-        } else if (numbers.length > 2) {
-          result += "/" + numbers.substring(2);
-        }
-
-        if (numbers.length >= 5) {
-          result += "/" + numbers.substring(4, 8);
-        }
-
-        this.value = result;
-      });
-
+    
+      const msgHoje = document.getElementById("msg-hoje");
+      const msgData = document.getElementById("msg-data");
+      const msgPeriodo = document.getElementById("msg-periodo");
+    
+      function hideAll() {
+        boxHoje.style.display = "none";
+        boxData.style.display = "none";
+        boxPeriodo.style.display = "none";
+      }
+    
+      function formatarData(input) {
+        input.addEventListener("input", function () {
+          let numbers = this.value.replace(/\D/g, "").substring(0, 8);
+          let result = "";
+    
+          if (numbers.length >= 2) result += numbers.substring(0, 2);
+          else result += numbers;
+    
+          if (numbers.length > 2)
+            result += "/" + numbers.substring(2, 4);
+    
+          if (numbers.length > 4)
+            result += "/" + numbers.substring(4, 8);
+    
+          this.value = result;
+        });
+      }
+    
+      formatarData(document.getElementById("input-data"));
+      formatarData(document.getElementById("input-inicio"));
+      formatarData(document.getElementById("input-fim"));
+    
       document.getElementById("btn-hoje").onclick = () => {
-        boxData.style.display = "none";
+        hideAll();
         boxHoje.style.display = "block";
-        setMsgHoje("");
+        msgHoje.textContent = "";
       };
-
+    
       document.getElementById("btn-anteriores").onclick = () => {
-        boxHoje.style.display = "none";
+        hideAll();
         boxData.style.display = "block";
-        setMsgData("");
+        msgData.textContent = "";
       };
-
+    
       document.getElementById("btn-passados").onclick = () => {
-        boxHoje.style.display = "none";
-        boxData.style.display = "none";
+        hideAll();
         boxPeriodo.style.display = "block";
-        setMsgPeriodo("");
+        msgPeriodo.textContent = "";
       };
-
-      document.getElementById("btn-cancelar-hoje").onclick = () => {
-        window.WlExtension.closeModal({ cancelled: true });
-      };
-
+    
       document.getElementById("btn-confirmar-hoje").onclick = () => {
         window.WlExtension.closeModal({ action: "hoje" });
       };
-
+    
+      document.getElementById("btn-cancelar-hoje").onclick = () => {
+        window.WlExtension.closeModal({ cancelled: true });
+      };
+    
       document.getElementById("btn-confirmar-data").onclick = () => {
-        const dataDigitada = inputData.value.trim();
-
-        if (!/^\d{2}\/\d{2}\/\d{2}$/.test(dataDigitada)) {
-          setMsgData("Data inválida. Use DD/MM/AA");
+        const data = document.getElementById("input-data").value.trim();
+        if (!/^\d{2}\/\d{2}\/\d{2}$/.test(data)) {
+          msgData.textContent = "Data inválida. Use DD/MM/AA";
           return;
         }
-
-        window.WlExtension.closeModal({
-          action: "data",
-          data: dataDigitada
-        });
+        window.WlExtension.closeModal({ action: "data", data });
       };
-
+    
       document.getElementById("btn-cancelar-data").onclick = () => {
         window.WlExtension.closeModal({ cancelled: true });
       };
+    
+      document.getElementById("btn-confirmar-periodo").onclick = () => {
+        const inicio = document.getElementById("input-inicio").value.trim();
+        const fim = document.getElementById("input-fim").value.trim();
+    
+        if (!/^\d{2}\/\d{2}\/\d{2}$/.test(inicio) ||
+            !/^\d{2}\/\d{2}\/\d{2}$/.test(fim)) {
+          msgPeriodo.textContent = "Datas inválidas. Use DD/MM/AA";
+          return;
+        }
+    
+        window.WlExtension.closeModal({
+          action: "periodo",
+          dataInicio: inicio,
+          dataFim: fim
+        });
+      };
+    
+      document.getElementById("btn-cancelar-periodo").onclick = () => {
+        window.WlExtension.closeModal({ cancelled: true });
+      };
     }
-
-    document.getElementById("btn-confirmar-periodo").onclick = () => {
-      const inicio = document.getElementById("input-inicio").value.trim();
-      const fim = document.getElementById("input-fim").value.trim();
-
-      if (!/^\d{2}\/\d{2}\/\d{2}$/.test(inicio) ||
-        !/^\d{2}\/\d{2}\/\d{2}$/.test(fim)) {
-        setMsgPeriodo("Datas inválidas. Use DD/MM/AA");
-        return;
-      }
-
-      window.WlExtension.closeModal({
-        action: "periodo",
-        dataInicio: inicio,
-        dataFim: fim
-      });
-    };
-
-    document.getElementById("btn-cancelar-periodo").onclick = () => {
-      window.WlExtension.closeModal({ cancelled: true });
-    };
 
     function initExtension() {
       window.WlExtension.initialize({
