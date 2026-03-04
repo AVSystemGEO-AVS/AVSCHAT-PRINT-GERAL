@@ -173,12 +173,26 @@
             gap: 10px;
             margin-top: 16px;
           }
-    
+
+          .actions button,
           .row input {
-            width: 170px;            
-            flex: none;
+            flex: 1;
+            box-sizing: border-box;
             padding: 8px;
             border-radius: 6px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+          }
+
+          .row input {
+            border: 1px solid #ccc; /* opcional, igual estilo de botão */
+          }
+          
+          .actions button {
+            background-color: #192d3e;
+            color: #fff;
+            border: none;
+            cursor: pointer;
           }
     
           .msg {
