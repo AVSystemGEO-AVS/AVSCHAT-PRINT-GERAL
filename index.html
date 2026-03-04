@@ -131,109 +131,112 @@
     }
 
     function renderModal() {
-      document.body.innerHTML = `
-        <style>
-          body {
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 14px;
-            color: #000;
-          }
-    
-          .container {
-            padding: 16px;
-            width: 100%;
-            max-width: 500px;
-            margin: 0 auto;
-          }
-    
-          .actions {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 16px;
-          }
-    
-          button {
-            padding: 8px;
-            width: 170px;
-            cursor: pointer;
-            background-color: #192d3e;
-            color: #ffffff;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-          }
-    
-          .box {
-            margin-top: 16px;
-            display: none;
-          }
-    
-          .row {
-            display: flex;
-            gap: 10px;
-            margin-top: 16px;
-          }
-
-          .actions button,
-          .row input {
-            flex: 1;
-            box-sizing: border-box;
-            padding: 8px;
-            border-radius: 6px;
-            font-size: 14px;
-            border: 1px solid #ccc;
-          }
-
-          .row input {
-            border: 1px solid #ccc; /* opcional, igual estilo de botão */
-          }
-          
-          .actions button {
-            background-color: #192d3e;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-          }
-    
-          .msg {
-            margin-top: 10px;
-            color: #b00020;
-            font-size: 13px;
-            min-height: 18px;
-          }
-    
-        </style>
-    
-        <div class="container">
-    
-          <div class="actions">
-            <button id="btn-hoje" type="button">HOJE</button>
-            <button id="btn-periodo" type="button">DIAS ANTERIORES</button>
-          </div>
-    
-          <div id="box-hoje" class="box">
-            <p>Será impresso o histórico de hoje.</p>
-            <div class="row">
-              <button id="btn-confirmar-hoje" type="button">CONFIRMAR</button>
-              <button id="btn-cancelar-hoje" type="button">CANCELAR</button>
-            </div>
-            <div id="msg-hoje" class="msg"></div>
-          </div>
-    
-          <div id="box-periodo" class="box">
-            <p>Informe o período (DD/MM/AA)</p>
-            <div class="row">
-              <input id="input-inicio" type="tel" maxlength="8" placeholder="Data início" />
-              <input id="input-fim" type="tel" maxlength="8" placeholder="Data fim" />
-            </div>
-            <div class="row">
-              <button id="btn-confirmar-periodo" type="button">CONFIRMAR</button>
-              <button id="btn-cancelar-periodo" type="button">CANCELAR</button>
-            </div>
-            <div id="msg-periodo" class="msg"></div>
-          </div>
-    
+     document.body.innerHTML = `
+      <style>
+        * {
+          box-sizing: border-box;
+        }
+      
+        body {
+          font-family: Arial, Helvetica, sans-serif;
+          font-size: 14px;
+          color: #000;
+          margin: 0;
+        }
+      
+        .container {
+          padding: 16px;
+          width: 100%;
+          max-width: 500px;
+          margin: 0 auto;
+        }
+      
+        .actions {
+          display: flex;
+          gap: 10px;
+          margin-bottom: 16px;
+        }
+      
+        .actions button {
+          flex: 1;
+          padding: 10px;
+          background-color: #192d3e;
+          color: #ffffff;
+          border: none;
+          border-radius: 6px;
+          font-size: 14px;
+          cursor: pointer;
+        }
+      
+        .box {
+          margin-top: 10px;
+          display: none;
+        }
+      
+        .row {
+          display: flex;
+          gap: 10px;
+          margin-top: 14px;
+        }
+      
+        .row input {
+          flex: 1;
+          padding: 10px;
+          border-radius: 6px;
+          border: 1px solid #ccc;
+          font-size: 14px;
+        }
+      
+        .row button {
+          flex: 1;
+          padding: 10px;
+          background-color: #192d3e;
+          color: #ffffff;
+          border: none;
+          border-radius: 6px;
+          font-size: 14px;
+          cursor: pointer;
+        }
+      
+        .msg {
+          margin-top: 10px;
+          color: #b00020;
+          font-size: 13px;
+          min-height: 18px;
+        }
+      
+      </style>
+      
+      <div class="container">
+      
+        <div class="actions">
+          <button id="btn-hoje" type="button">HOJE</button>
+          <button id="btn-periodo" type="button">DIAS ANTERIORES</button>
         </div>
+      
+        <div id="box-hoje" class="box">
+          <p>Será impresso o histórico de hoje.</p>
+          <div class="row">
+            <button id="btn-confirmar-hoje" type="button">CONFIRMAR</button>
+            <button id="btn-cancelar-hoje" type="button">CANCELAR</button>
+          </div>
+          <div id="msg-hoje" class="msg"></div>
+        </div>
+      
+        <div id="box-periodo" class="box">
+          <p>Informe o período (DD/MM/AA)</p>
+          <div class="row">
+            <input id="input-inicio" type="tel" maxlength="8" placeholder="Data início" />
+            <input id="input-fim" type="tel" maxlength="8" placeholder="Data fim" />
+          </div>
+          <div class="row">
+            <button id="btn-confirmar-periodo" type="button">CONFIRMAR</button>
+            <button id="btn-cancelar-periodo" type="button">CANCELAR</button>
+          </div>
+          <div id="msg-periodo" class="msg"></div>
+        </div>
+      
+      </div>
       `;
     
       const boxHoje = document.getElementById("box-hoje");
