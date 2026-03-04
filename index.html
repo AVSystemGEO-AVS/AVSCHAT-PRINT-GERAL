@@ -8,6 +8,7 @@
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
 </head>
 
 <body>
@@ -256,9 +257,11 @@
   
       const fp = flatpickr("#range", {
         mode: "range",
-        dateFormat: "Y-m-d",
+        dateFormat: "d/m/Y",
         minDate: "2026-02-02",
-        maxDate: hoje
+        maxDate: hoje,
+        locale: "pt",
+        appendTo: document.body 
       });
   
       document.getElementById("btn-confirmar-periodo").onclick = () => {
