@@ -253,15 +253,15 @@
     };
 
     setTimeout(() => {
-      const hoje = new Date();
+      const hoje = new Date().toISOString().split("T")[0];
   
       const fp = flatpickr("#range", {
         mode: "range",
         dateFormat: "d/m/Y",
         minDate: "2026-02-02",
         maxDate: hoje,
-        locale: "pt",
-        appendTo: document.body 
+        locale: flatpickr.l10ns.pt, 
+        appendTo: document.body
       });
   
       document.getElementById("btn-confirmar-periodo").onclick = () => {
