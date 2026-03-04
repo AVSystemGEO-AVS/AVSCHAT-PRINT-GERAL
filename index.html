@@ -131,54 +131,52 @@
     }
 
     function renderModal() {
-     document.body.innerHTML = `
+      document.body.innerHTML = `
       <style>
-        * {
-          box-sizing: border-box;
-        }
-      
+        * { box-sizing: border-box; }
+    
         body {
           font-family: Arial, Helvetica, sans-serif;
           font-size: 14px;
           color: #000;
           margin: 0;
         }
-      
+    
         .container {
           padding: 16px;
           width: 100%;
           max-width: 500px;
           margin: 0 auto;
         }
-      
+    
         .actions {
           display: flex;
           gap: 10px;
           margin-bottom: 16px;
         }
-      
+    
         .actions button {
           flex: 1;
           padding: 10px;
           background-color: #192d3e;
-          color: #ffffff;
+          color: #fff;
           border: none;
           border-radius: 6px;
           font-size: 14px;
           cursor: pointer;
         }
-      
+    
         .box {
           margin-top: 10px;
           display: none;
         }
-      
+    
         .row {
           display: flex;
           gap: 10px;
           margin-top: 14px;
         }
-      
+    
         .row input {
           flex: 1;
           padding: 10px;
@@ -186,34 +184,33 @@
           border: 1px solid #ccc;
           font-size: 14px;
         }
-      
+    
         .row button {
           flex: 1;
           padding: 10px;
           background-color: #192d3e;
-          color: #ffffff;
+          color: #fff;
           border: none;
           border-radius: 6px;
           font-size: 14px;
           cursor: pointer;
         }
-      
+    
         .msg {
           margin-top: 10px;
           color: #b00020;
           font-size: 13px;
           min-height: 18px;
         }
-      
       </style>
-      
+    
       <div class="container">
-      
+    
         <div class="actions">
           <button id="btn-hoje" type="button">HOJE</button>
           <button id="btn-periodo" type="button">DIAS ANTERIORES</button>
         </div>
-      
+    
         <div id="box-hoje" class="box">
           <p>Será impresso o histórico de hoje.</p>
           <div class="row">
@@ -222,12 +219,12 @@
           </div>
           <div id="msg-hoje" class="msg"></div>
         </div>
-      
+    
         <div id="box-periodo" class="box">
-          <p>Informe o período (DD/MM/AA)</p>
+          <p>Informe o período</p>
           <div class="row">
-            <input id="input-inicio" type="tel" maxlength="8" placeholder="Data início" />
-            <input id="input-fim" type="tel" maxlength="8" placeholder="Data fim" />
+            <input id="input-inicio" type="date" min="2026-02-02" />
+            <input id="input-fim" type="date" min="2026-02-02" />
           </div>
           <div class="row">
             <button id="btn-confirmar-periodo" type="button">CONFIRMAR</button>
@@ -235,7 +232,7 @@
           </div>
           <div id="msg-periodo" class="msg"></div>
         </div>
-      
+    
       </div>
       `;
     
@@ -243,31 +240,18 @@
       const boxPeriodo = document.getElementById("box-periodo");
       const msgPeriodo = document.getElementById("msg-periodo");
     
+      const inputInicio = document.getElementById("input-inicio");
+      const inputFim = document.getElementById("input-fim");
+    
+      // Define data máxima como hoje
+      const hojeISO = new Date().toISOString().split("T")[0];
+      inputInicio.max = hojeISO;
+      inputFim.max = hojeISO;
+    
       function hideAll() {
         boxHoje.style.display = "none";
         boxPeriodo.style.display = "none";
       }
-    
-      function formatarData(input) {
-        input.addEventListener("input", function () {
-          let numbers = this.value.replace(/\D/g, "").substring(0, 8);
-          let result = "";
-    
-          if (numbers.length >= 2) result += numbers.substring(0, 2);
-          else result += numbers;
-    
-          if (numbers.length > 2)
-            result += "/" + numbers.substring(2, 4);
-    
-          if (numbers.length > 4)
-            result += "/" + numbers.substring(4, 8);
-    
-          this.value = result;
-        });
-      }
-    
-      formatarData(document.getElementById("input-inicio"));
-      formatarData(document.getElementById("input-fim"));
     
       document.getElementById("btn-hoje").onclick = () => {
         hideAll();
@@ -288,12 +272,16 @@
       };
     
       document.getElementById("btn-confirmar-periodo").onclick = () => {
-        const inicio = document.getElementById("input-inicio").value.trim();
-        const fim = document.getElementById("input-fim").value.trim();
+        const inicio = inputInicio.value;
+        const fim = inputFim.value;
     
-        if (!/^\d{2}\/\d{2}\/\d{2}$/.test(inicio) ||
-            !/^\d{2}\/\d{2}\/\d{2}$/.test(fim)) {
-          msgPeriodo.textContent = "Datas inválidas. Use DD/MM/AA";
+        if (!inicio || !fim) {
+          msgPeriodo.textContent = "Selecione as duas datas.";
+          return;
+        }
+    
+        if (inicio > fim) {
+          msgPeriodo.textContent = "Data inicial não pode ser maior que a final.";
           return;
         }
     
