@@ -242,8 +242,7 @@
     
       const inputInicio = document.getElementById("input-inicio");
       const inputFim = document.getElementById("input-fim");
-    
-      // Define data máxima como hoje
+
       const hojeISO = new Date().toISOString().split("T")[0];
       inputInicio.max = hojeISO;
       inputFim.max = hojeISO;
@@ -354,11 +353,29 @@
 
                       const resposta = await chamarN8n(payload, webhookUrl);
 
-                      const titulo =
-                        ret.action === "data"
-                          ? "Histórico de " + ret.data
-                          : "Histórico de hoje";
-
+                     function formatarBR(dataISO) {
+                        const [ano, mes, dia] = dataISO.split("-");
+                        return `${dia}/${mes}/${ano}`;
+                      }
+                      
+                      let titulo = "Histórico";
+                      
+                      if (ret.action === "hoje") {
+                        const hoje = new Date().toISOString().split("T")[0];
+                        titulo = "Histórico " + formatarBR(hoje);
+                      }
+                      
+                      if (ret.action === "periodo") {
+                        const inicio = formatarBR(ret.dataInicio);
+                        const fim = formatarBR(ret.dataFim);
+                      
+                        if (inicio === fim) {
+                          titulo = "Histórico " + inicio;
+                        } else {
+                          titulo = "Histórico " + inicio + " a " + fim;
+                        }
+                      }
+                      
                       imprimirTexto(resposta, titulo);
 
                       window.WlExtension.alert({
