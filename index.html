@@ -75,30 +75,29 @@
       return respostaText;
     }
 
-    function imprimirTexto(resposta, titulo) {
-      const safeTitle = titulo || "Histórico";
+    function imprimirTexto(resposta) {
       const safeText = String(resposta || "")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
-
+    
       const html = `
-    <!DOCTYPE html>
-    <html lang="pt-BR">
-    <head>
-    <meta charset="UTF-8" />
-    <title>${safeTitle}</title>
-    <style>
-        body { font-family: Arial, Helvetica, sans-serif; padding: 24px; }
-        h1 { font-size: 18px; margin: 0 0 12px; }
-        pre { white-space: pre-wrap; word-wrap: break-word; font-size: 12.5px; line-height: 1.45; }
-    </style>
-    </head>
-    <body>
-    <h1>${safeTitle}</h1>
-    <pre>${safeText}</pre>
-    </body>
-    </html>`.trim();
-
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+          <meta charset="UTF-8" />
+          <title>Histórico</title>
+          <style>
+            body { font-family: Arial, Helvetica, sans-serif; padding: 24px; }
+            h1 { font-size: 18px; margin: 0 0 12px; }
+            pre { white-space: pre-wrap; word-wrap: break-word; font-size: 12.5px; line-height: 1.45; }
+          </style>
+        </head>
+        <body>
+          <h1>Histórico</h1>
+          <pre>${safeText}</pre>
+        </body>
+        </html>`.trim();
+    
       const iframe = document.createElement("iframe");
       iframe.style.position = "fixed";
       iframe.style.right = "0";
@@ -107,13 +106,8 @@
       iframe.style.height = "0";
       iframe.style.border = "0";
       document.body.appendChild(iframe);
-
-      let jaImprimiu = false;
-
+    
       iframe.onload = function () {
-        if (jaImprimiu) return;
-        jaImprimiu = true;
-
         setTimeout(() => {
           try {
             iframe.contentWindow.focus();
@@ -123,7 +117,7 @@
           }
         }, 200);
       };
-
+    
       const doc = iframe.contentWindow.document;
       doc.open();
       doc.write(html);
@@ -352,31 +346,8 @@
                       console.log("WEBHOOK ESCOLHIDO:", webhookUrl);
 
                       const resposta = await chamarN8n(payload, webhookUrl);
-
-                     function formatarBR(dataISO) {
-                        const [ano, mes, dia] = dataISO.split("-");
-                        return `${dia}/${mes}/${ano}`;
-                      }
-                      
-                      let titulo = "Histórico";
-                      
-                      if (ret.action === "hoje") {
-                        const hoje = new Date().toISOString().split("T")[0];
-                        titulo = "Histórico " + formatarBR(hoje);
-                      }
-                      
-                      if (ret.action === "periodo") {
-                        const inicio = formatarBR(ret.dataInicio);
-                        const fim = formatarBR(ret.dataFim);
-                      
-                        if (inicio === fim) {
-                          titulo = "Histórico " + inicio;
-                        } else {
-                          titulo = "Histórico " + inicio + " a " + fim;
-                        }
-                      }
-                      
-                      imprimirTexto(resposta, titulo);
+                     
+                      imprimirTexto(resposta);
 
                       window.WlExtension.alert({
                         message: "Impressão enviada!",
