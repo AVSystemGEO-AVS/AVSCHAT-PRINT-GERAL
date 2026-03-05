@@ -5,10 +5,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>IMPRIMIR</title>
-
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
 </head>
 
 <body>
@@ -135,159 +131,172 @@
     }
 
     function renderModal() {
-  document.body.innerHTML = `
-
-  <style>
-    * { box-sizing: border-box; }
-
-    body {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 14px;
-      margin: 0;
-    }
-
-    .container {
-      padding: 16px;
-      max-width: 500px;
-      margin: 0 auto;
-    }
-
-    .actions {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-
-    .actions button,
-    .row button {
-      flex: 1;
-      padding: 10px;
-      background-color: #192d3e;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    .box {
-      display: none;
-      margin-top: 10px;
-    }
-
-    .row {
-      display: flex;
-      gap: 10px;
-      margin-top: 14px;
-    }
-
-    input {
-      flex: 1;
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-
-    .msg {
-      margin-top: 10px;
-      color: #b00020;
-      font-size: 13px;
-      min-height: 18px;
-    }
-  </style>
-
-  <div class="container">
-
-    <div class="actions">
-      <button id="btn-hoje">HOJE</button>
-      <button id="btn-periodo">DIAS ANTERIORES</button>
-    </div>
-
-    <div id="box-hoje" class="box">
-      <p>Será impresso o histórico de hoje.</p>
-      <div class="row">
-        <button id="btn-confirmar-hoje">CONFIRMAR</button>
-        <button id="btn-cancelar-hoje">CANCELAR</button>
+      document.body.innerHTML = `
+      <style>
+        * { box-sizing: border-box; }
+    
+        body {
+          font-family: Arial, Helvetica, sans-serif;
+          font-size: 14px;
+          color: #000;
+          margin: 0;
+        }
+    
+        .container {
+          padding: 16px;
+          width: 100%;
+          max-width: 500px;
+          margin: 0 auto;
+        }
+    
+        .actions {
+          display: flex;
+          gap: 10px;
+          margin-bottom: 16px;
+        }
+    
+        .actions button {
+          flex: 1;
+          padding: 10px;
+          background-color: #192d3e;
+          color: #fff;
+          border: none;
+          border-radius: 6px;
+          font-size: 14px;
+          cursor: pointer;
+        }
+    
+        .box {
+          margin-top: 10px;
+          display: none;
+        }
+    
+        .row {
+          display: flex;
+          gap: 10px;
+          margin-top: 14px;
+        }
+    
+        .row input {
+          flex: 1;
+          padding: 10px;
+          border-radius: 6px;
+          border: 1px solid #ccc;
+          font-size: 14px;
+        }
+    
+        .row button {
+          flex: 1;
+          padding: 10px;
+          background-color: #192d3e;
+          color: #fff;
+          border: none;
+          border-radius: 6px;
+          font-size: 14px;
+          cursor: pointer;
+        }
+    
+        .msg {
+          margin-top: 10px;
+          color: #b00020;
+          font-size: 13px;
+          min-height: 18px;
+        }
+      </style>
+    
+      <div class="container">
+    
+        <div class="actions">
+          <button id="btn-hoje" type="button">HOJE</button>
+          <button id="btn-periodo" type="button">DIAS ANTERIORES</button>
+        </div>
+    
+        <div id="box-hoje" class="box">
+          <p>Será impresso o histórico de hoje.</p>
+          <div class="row">
+            <button id="btn-confirmar-hoje" type="button">CONFIRMAR</button>
+            <button id="btn-cancelar-hoje" type="button">CANCELAR</button>
+          </div>
+          <div id="msg-hoje" class="msg"></div>
+        </div>
+    
+        <div id="box-periodo" class="box">
+          <p>Informe o período</p>
+          <div class="row">
+            <input id="input-inicio" type="date" min="2026-02-02" />
+            <input id="input-fim" type="date" min="2026-02-02" />
+          </div>
+          <div class="row">
+            <button id="btn-confirmar-periodo" type="button">CONFIRMAR</button>
+            <button id="btn-cancelar-periodo" type="button">CANCELAR</button>
+          </div>
+          <div id="msg-periodo" class="msg"></div>
+        </div>
+    
       </div>
-    </div>
-
-    <div id="box-periodo" class="box">
-      <p>Selecione o período</p>
-      <div class="row">
-        <input id="range" placeholder="Selecione o intervalo" />
-      </div>
-      <div class="row">
-        <button id="btn-confirmar-periodo">CONFIRMAR</button>
-        <button id="btn-cancelar-periodo">CANCELAR</button>
-      </div>
-      <div id="msg-periodo" class="msg"></div>
-    </div>
-
-  </div>
-  `;
-
-    const boxHoje = document.getElementById("box-hoje");
-    const boxPeriodo = document.getElementById("box-periodo");
-    const msgPeriodo = document.getElementById("msg-periodo");
-  
-    function hideAll() {
-      boxHoje.style.display = "none";
-      boxPeriodo.style.display = "none";
-    }
-  
-    document.getElementById("btn-hoje").onclick = () => {
-      hideAll();
-      boxHoje.style.display = "block";
-    };
-  
-    document.getElementById("btn-periodo").onclick = () => {
-      hideAll();
-      boxPeriodo.style.display = "block";
-    };
-  
-    document.getElementById("btn-confirmar-hoje").onclick = () => {
-      window.WlExtension.closeModal({ action: "hoje" });
-    };
-  
-    document.getElementById("btn-cancelar-hoje").onclick = () => {
-      window.WlExtension.closeModal({ cancelled: true });
-    };
-
-    setTimeout(() => {
-      const hoje = new Date().toISOString().split("T")[0];
-  
-      const fp = flatpickr("#range", {
-        mode: "range",
-        dateFormat: "d/m/Y",
-        minDate: "2026-02-02",
-        maxDate: hoje,
-        locale: flatpickr.l10ns.pt, 
-        appendTo: document.body
-      });
-  
+      `;
+    
+      const boxHoje = document.getElementById("box-hoje");
+      const boxPeriodo = document.getElementById("box-periodo");
+      const msgPeriodo = document.getElementById("msg-periodo");
+    
+      const inputInicio = document.getElementById("input-inicio");
+      const inputFim = document.getElementById("input-fim");
+    
+      // Define data máxima como hoje
+      const hojeISO = new Date().toISOString().split("T")[0];
+      inputInicio.max = hojeISO;
+      inputFim.max = hojeISO;
+    
+      function hideAll() {
+        boxHoje.style.display = "none";
+        boxPeriodo.style.display = "none";
+      }
+    
+      document.getElementById("btn-hoje").onclick = () => {
+        hideAll();
+        boxHoje.style.display = "block";
+      };
+    
+      document.getElementById("btn-periodo").onclick = () => {
+        hideAll();
+        boxPeriodo.style.display = "block";
+      };
+    
+      document.getElementById("btn-confirmar-hoje").onclick = () => {
+        window.WlExtension.closeModal({ action: "hoje" });
+      };
+    
+      document.getElementById("btn-cancelar-hoje").onclick = () => {
+        window.WlExtension.closeModal({ cancelled: true });
+      };
+    
       document.getElementById("btn-confirmar-periodo").onclick = () => {
-        const datas = fp.selectedDates;
-  
-        if (datas.length !== 2) {
-          msgPeriodo.textContent = "Selecione a data inicial e final.";
+        const inicio = inputInicio.value;
+        const fim = inputFim.value;
+    
+        if (!inicio || !fim) {
+          msgPeriodo.textContent = "Selecione as duas datas.";
           return;
         }
-  
-        const inicio = datas[0].toISOString().split("T")[0];
-        const fim = datas[1].toISOString().split("T")[0];
-  
+    
+        if (inicio > fim) {
+          msgPeriodo.textContent = "Data inicial não pode ser maior que a final.";
+          return;
+        }
+    
         window.WlExtension.closeModal({
           action: "periodo",
           dataInicio: inicio,
           dataFim: fim
         });
       };
-    }, 300);
-  
-    document.getElementById("btn-cancelar-periodo").onclick = () => {
-      window.WlExtension.closeModal({ cancelled: true });
-    };
-  }
-      
+    
+      document.getElementById("btn-cancelar-periodo").onclick = () => {
+        window.WlExtension.closeModal({ cancelled: true });
+      };
+    }
+
     function initExtension() {
       window.WlExtension.initialize({
         buttons: {
@@ -382,4 +391,4 @@
 
 </body>
 
-</html>
+</html> 
