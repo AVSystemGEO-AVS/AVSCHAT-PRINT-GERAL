@@ -84,19 +84,80 @@
         <!DOCTYPE html>
         <html lang="pt-BR">
         <head>
-          <meta charset="UTF-8" />
-          <title>Histórico</title>
-          <style>
-            body { font-family: Arial, Helvetica, sans-serif; padding: 24px; }
-            h1 { font-size: 18px; margin: 0 0 12px; }
-            pre { white-space: pre-wrap; word-wrap: break-word; font-size: 12.5px; line-height: 1.45; }
-          </style>
+        <meta charset="UTF-8" />
+        <title>Histórico</title>
+        
+        <style>
+        
+        @page {
+          size: A4;
+          margin: 20mm 15mm 20mm 15mm;
+        }
+        
+        body {
+          font-family: Arial, Helvetica, sans-serif;
+          margin: 0;
+          background: #ffffff;
+        }
+        
+        .page {
+          width: 180mm;
+          margin: 0 auto;
+        }
+        
+        .header {
+          text-align: center;
+          margin-bottom: 10px;
+          border-bottom: 1px solid #ddd;
+          padding-bottom: 8px;
+        }
+        
+        .header img {
+          height: 55px;
+        }
+        
+        .content {
+          margin-top: 20px;
+        }
+        
+        h1 {
+          text-align: center;
+          margin-top: 10px;
+          color: #333;
+          font-size: 20px;
+          font-weight: bold;
+        }
+        
+        p {
+          font-size: 14px;
+          color: #333;
+          line-height: 1.6;
+          text-align: justify;
+          white-space: pre-line;
+        }
+        
+        </style>
+        
         </head>
+        
         <body>
-          <h1>Histórico</h1>
-          <pre>${safeText}</pre>
+        
+        <div class="page">
+        
+          <div class="header">
+            <img src="https://avsystemgeo.com.br/images/Elementos/marca-avsystem.png">
+          </div>
+        
+          <div class="content">
+            <h1>HISTÓRICO</h1>
+            <p>${safeText}</p>
+          </div>
+        
+        </div>
+        
         </body>
-        </html>`.trim();
+        </html>
+        `.trim();
     
       const iframe = document.createElement("iframe");
       iframe.style.position = "fixed";
