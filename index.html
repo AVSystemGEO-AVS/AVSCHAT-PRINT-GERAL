@@ -88,123 +88,69 @@
         <title>Histórico</title>
         
         <style>
-          * {
-            box-sizing: border-box;
-          }
         
-          body {
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 14px;
-            color: #000;
-            margin: 0;
-          }
+        @page {
+          size: A4;
+          margin: 20mm 15mm 20mm 15mm;
+        }
         
-          .container {
-            padding: 16px;
-            width: 100%;
-            max-width: 500px;
-            margin: 0 auto;
-          }
+        body {
+          font-family: Arial, Helvetica, sans-serif;
+          margin: 0;
+          background: #ffffff;
+        }
         
-          .actions {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 16px;
-          }
+        .page {
+          width: 180mm;
+          margin: 0 auto;
+        }
         
-          .actions button {
-            flex: 1;
-            padding: 10px;
-            background-color: #192d3e;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            cursor: pointer;
-          }
+        .header {
+          text-align: center;
+          margin-bottom: 10px;
+          border-bottom: 1px solid #ddd;
+          padding-bottom: 8px;
+        }
         
-          .box {
-            margin-top: 10px;
-            display: none;
-            position: relative;
-            padding-bottom: 60px;
-          }
+        .header img {
+          height: 55px;
+        }
         
-          .row {
-            display: flex;
-            gap: 10px;
-            margin-top: 14px;
-          }
+        .content {
+          margin-top: 20px;
+        }
         
-          .row input {
-            flex: 1;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            font-size: 14px;
-          }
+        h1 {
+          text-align: left;
+          margin-top: 10px;
+          color: #333;
+          font-size: 20px;
+          font-weight: bold;
+        }
         
-          .confirmar-hoje .cancelar-hoje{
-            flex: 1;
-            padding: 10px;
-            background-color: #192d3e;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            cursor: pointer;
-          }
+        p {
+          font-size: 14px;
+          color: #333;
+          line-height: 1.6;
+          text-align: justify;
+          white-space: pre-line;
+        }
         
-          .confirmar-periodo .cancelar-periodo {
-            flex: 1;
-            padding: 10px;
-            background-color: #192d3e;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            cursor: pointer;
-          }
-        
-          .msg {
-            margin-top: 10px;
-            color: #b00020;
-            font-size: 13px;
-            min-height: 18px;
-          }
         </style>
         
         </head>
         
         <body>
         
-        <div class="container">
-
-          <div class="actions">
-            <button id="btn-hoje" type="button">HOJE</button>
-            <button id="btn-periodo" type="button">DIAS ANTERIORES</button>
+        <div class="page">
+        
+          <div class="header">
+            <img src="https://fileschat.sfo2.digitaloceanspaces.com/public/whitelabels/avschat/logoLogin.png">
           </div>
         
-          <div id="box-hoje" class="box">
-            <p>Será impresso o histórico de hoje.</p>
-            <div class="row">
-              <button id="btn-confirmar-hoje" class="confirmar-hoje" type="button">CONFIRMAR</button>
-              <button id="btn-cancelar-hoje" class="cancelar-hoje" type="button">CANCELAR</button>
-            </div>
-            <div id="msg-hoje" class="msg"></div>
-          </div>
-        
-          <div id="box-periodo" class="box">
-            <p>Informe o período</p>
-            <div class="row">
-              <input id="input-inicio" type="date" min="2026-02-02" />
-              <input id="input-fim" type="date" min="2026-02-02" />
-            </div>
-            <div class="row">
-              <button id="btn-confirmar-periodo" class="confirmar-periodo" type="button">CONFIRMAR</button>
-              <button id="btn-cancelar-periodo" class="cancelar-periodo" type="button">CANCELAR</button>
-            </div>
-            <div id="msg-periodo" class="msg"></div>
+          <div class="content">
+            <h1>HISTÓRICO</h1>
+            <p>${safeText}</p>
           </div>
         
         </div>
@@ -278,8 +224,6 @@
         .box {
           margin-top: 10px;
           display: none;
-          position: relative;
-          padding-bottom: 60px;
         }
     
         .row {
