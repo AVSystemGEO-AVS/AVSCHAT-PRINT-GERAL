@@ -250,7 +250,10 @@
           font-size: 14px;
           cursor: pointer;
         }
-    
+
+        .butonHoje {
+          margin-top: 50px;
+        }    
         .msg {
           margin-top: 10px;
           color: #b00020;
@@ -269,21 +272,21 @@
         <div id="box-hoje" class="box">
           <p>Será impresso o histórico de hoje.</p>
           <div class="row">
-            <button id="btn-confirmar-hoje" type="button">CONFIRMAR</button>
-            <button id="btn-cancelar-hoje" type="button">CANCELAR</button>
+            <button id="btn-confirmar-hoje" type="button" class="butonHoje">CONFIRMAR</button>
+            <button id="btn-cancelar-hoje" type="button" class="butonHoje">CANCELAR</button>
           </div>
           <div id="msg-hoje" class="msg"></div>
         </div>
     
         <div id="box-periodo" class="box">
-          <p>Informe o período</p>
+          <p>Informe a data de início e fim</p>
           <div class="row">
             <input id="input-inicio" type="date" min="2026-02-02" />
             <input id="input-fim" type="date" min="2026-02-02" />
           </div>
           <div class="row">
-            <button id="btn-confirmar-periodo" type="button">CONFIRMAR</button>
-            <button id="btn-cancelar-periodo" type="button">CANCELAR</button>
+            <button id="btn-confirmar-periodo" type="button" class="butonPeriodo">CONFIRMAR</button>
+            <button id="btn-cancelar-periodo" type="button" class="butonPeriodo">CANCELAR</button>
           </div>
           <div id="msg-periodo" class="msg"></div>
         </div>
