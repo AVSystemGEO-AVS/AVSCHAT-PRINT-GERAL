@@ -88,7 +88,9 @@
         <title>Histórico</title>
         
         <style>
-          * { box-sizing: border-box; }
+          * {
+            box-sizing: border-box;
+          }
         
           body {
             font-family: Arial, Helvetica, sans-serif;
@@ -100,7 +102,7 @@
           .container {
             padding: 16px;
             width: 100%;
-            max-width: 550px;
+            max-width: 500px;
             margin: 0 auto;
           }
         
@@ -124,10 +126,8 @@
           .box {
             margin-top: 10px;
             display: none;
-            min-height: 140px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+            position: relative;
+            padding-bottom: 60px;
           }
         
           .row {
@@ -144,19 +144,47 @@
             font-size: 14px;
           }
         
-          .buttons-hoje {
-
-          }
+          /* BOTÕES HOJE */
         
-          .buttons-periodo {
-
-          }
-        
-          .buttons-hoje button,
-          .buttons-periodo button {
+          .confirmar-hoje {
             flex: 1;
             padding: 10px;
             background-color: #192d3e;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+          }
+        
+          .cancelar-hoje {
+            flex: 1;
+            padding: 10px;
+            background-color: #6b7280;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+          }
+        
+          /* BOTÕES PERIODO */
+        
+          .confirmar-periodo {
+            flex: 1;
+            padding: 10px;
+            background-color: #192d3e;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+          }
+        
+          .cancelar-periodo {
+            flex: 1;
+            padding: 10px;
+            background-color: #6b7280;
             color: #fff;
             border: none;
             border-radius: 6px;
@@ -178,41 +206,33 @@
         
         <div class="container">
 
-            <div class="actions">
-              <button id="btn-hoje" type="button">HOJE</button>
-              <button id="btn-periodo" type="button">DIAS ANTERIORES</button>
+          <div class="actions">
+            <button id="btn-hoje" type="button">HOJE</button>
+            <button id="btn-periodo" type="button">DIAS ANTERIORES</button>
+          </div>
+        
+          <div id="box-hoje" class="box">
+            <p>Será impresso o histórico de hoje.</p>
+            <div class="row">
+              <button id="btn-confirmar-hoje" class="confirmar-hoje" type="button">CONFIRMAR</button>
+              <button id="btn-cancelar-hoje" class="cancelar-hoje" type="button">CANCELAR</button>
             </div>
-          
-            <div id="box-hoje" class="box">
-              <div>
-                <p>Será impresso o histórico de hoje.</p>
-                <div id="msg-hoje" class="msg"></div>
-              </div>
-          
-              <div class="buttons-hoje">
-                <button id="btn-confirmar-hoje" type="button">CONFIRMAR</button>
-                <button id="btn-cancelar-hoje" type="button">CANCELAR</button>
-              </div>
+            <div id="msg-hoje" class="msg"></div>
+          </div>
+        
+          <div id="box-periodo" class="box">
+            <p>Informe o período</p>
+            <div class="row">
+              <input id="input-inicio" type="date" min="2026-02-02" />
+              <input id="input-fim" type="date" min="2026-02-02" />
             </div>
-          
-            <div id="box-periodo" class="box">
-              <div>
-                <p>Informe o período</p>
-          
-                <div class="row">
-                  <input id="input-inicio" type="date" min="2026-02-02" />
-                  <input id="input-fim" type="date" min="2026-02-02" />
-                </div>
-          
-                <div id="msg-periodo" class="msg"></div>
-              </div>
-          
-              <div class="buttons-periodo">
-                <button id="btn-confirmar-periodo" type="button">CONFIRMAR</button>
-                <button id="btn-cancelar-periodo" type="button">CANCELAR</button>
-              </div>
+            <div class="row">
+              <button id="btn-confirmar-periodo" class="confirmar-periodo" type="button">CONFIRMAR</button>
+              <button id="btn-cancelar-periodo" class="cancelar-periodo" type="button">CANCELAR</button>
             </div>
-          
+            <div id="msg-periodo" class="msg"></div>
+          </div>
+        
         </div>
         
         </body>
