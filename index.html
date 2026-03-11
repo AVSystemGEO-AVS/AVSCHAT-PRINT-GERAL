@@ -76,9 +76,7 @@
     }
 
     function imprimirTexto(resposta) {
-      const safeText = String(resposta || "")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
+      const safeHtml = String(resposta || "");
     
       const html = `
         <!DOCTYPE html>
@@ -150,7 +148,7 @@
         
           <div class="content">
             <h1>HISTÓRICO</h1>
-            <p>${safeText}</p>
+            <div class="chat">${safeHtml}</div>
           </div>
         
         </div>
