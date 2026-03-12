@@ -76,11 +76,12 @@
     }
 
     function imprimirTexto(resposta) {
-      const safeHtml = String(resposta || "");
-    
-      const html = `
-       ${safeHtml}
-        `.trim();
+
+      let html = String(resposta || "");
+
+      try {
+        html = JSON.parse(`"${html.replace(/"/g, '\\"')}"`);
+      } catch(e) {}
     
       const iframe = document.createElement("iframe");
       iframe.style.position = "fixed";
@@ -89,6 +90,7 @@
       iframe.style.width = "0";
       iframe.style.height = "0";
       iframe.style.border = "0";
+    
       document.body.appendChild(iframe);
     
       iframe.onload = function () {
@@ -99,12 +101,13 @@
           } finally {
             setTimeout(() => iframe.remove(), 1000);
           }
-        }, 200);
+        }, 300);
       };
     
       const doc = iframe.contentWindow.document;
+    
       doc.open();
-      doc.write(html);
+      doc.write(html); 
       doc.close();
     }
 
