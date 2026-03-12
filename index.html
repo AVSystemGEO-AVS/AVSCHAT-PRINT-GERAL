@@ -175,8 +175,9 @@
         }
 
         .butonHoje {
-          margin-top: 55px;
-        }    
+          margin-top: 53px;
+        }   
+        
         .msg {
           margin-top: 10px;
           color: #b00020;
@@ -203,12 +204,12 @@
         <div id="box-periodo" class="box">
           <p>Informe a data de início e fim</p>
           <div class="row">
-            <input id="input-inicio" type="date" min="2026-02-02" />
-            <input id="input-fim" type="date" min="2026-02-02" />
+            <input id="input-inicio" type="date"  min="2026-02-02" />
+            <input id="input-fim" type="date"  min="2026-02-02" />
           </div>
           <div class="row">
-            <button id="btn-confirmar-periodo" type="button" class="butonPeriodo">CONFIRMAR</button>
-            <button id="btn-cancelar-periodo" type="button" class="butonPeriodo">CANCELAR</button>
+            <button id="btn-confirmar-periodo" type="button" >CONFIRMAR</button>
+            <button id="btn-cancelar-periodo" type="button" >CANCELAR</button>
           </div>
           <div id="msg-periodo" class="msg"></div>
         </div>
@@ -293,7 +294,7 @@
                   title: "IMPRIMIR",
                   url: modalUrl,
                   maxWidth: "550px",
-                  height: "320px",
+                  height: "318px",
 
                   callback: async (ret) => {
                     console.log("RETORNO MODAL:", ret);
