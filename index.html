@@ -318,6 +318,9 @@
                       organizationId: atendimento?.organizationId ?? atendimento?.organization?.id ?? "",
                       sectorId: atendimento?.sectorId ?? atendimento?.sector?.id ?? "",
 
+                      operadorId: atendimento?.userId ?? atendimento?.user?.id ?? "",
+                      operadorNome: atendimento?.user?.name ?? "",
+
                       userId: userInfo?.userId || "",
                       systemKey: userInfo?.systemKey || "",
 
