@@ -183,12 +183,20 @@
           color: #b00020;
           min-height: 18px;
         }
+
+        .warn{
+          background-color: #192d3e;
+          padding: 10px;
+          background-color: #192d3e;
+          border-radius: 6px;
+        }
+        
       </style>
     
       <div class="container">
 
-        <div>
-          <p><strong>ATIVADO A FUNÇÃO IMPRIMIR</strong><br>Este relatório pode conter dados pessoais e informações sensíveis. Ao realizar o download ou impressão, você declara estar autorizado pela organização controladora dos dados a acessar e tratar essas informações conforme suas políticas internas e legislação aplicável.</p>
+        <div class="warn">
+          <p><strong>Este relatório contém dados pessoais e informações sensíveis.</strong> Ao realizar o download ou impressão, você declara estar autorizado pela organização controladora dos dados a acessar e tratar essas informações conforme suas políticas internas e legislação aplicável.</p>
         </div>
     
         <div class="actions">
@@ -298,7 +306,7 @@
                   title: "IMPRIMIR",
                   url: modalUrl,
                   maxWidth: "550px",
-                  height: "438px",
+                  height: "458px",
 
                   callback: async (ret) => {
                     console.log("RETORNO MODAL:", ret);
