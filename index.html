@@ -195,7 +195,7 @@
     
       <div class="container">
 
-        <div class="warn">
+        <div class="warn" id="warn-box">
           <p><strong>Este relatório contém dados pessoais e informações sensíveis.</strong> Ao realizar o download ou impressão, você declara estar autorizado pela organização controladora dos dados a acessar e tratar essas informações conforme suas políticas internas e legislação aplicável.</p>
         </div>
     
@@ -216,12 +216,12 @@
         <div id="box-periodo" class="box">
           <p>Informe a data de início e fim</p>
           <div class="row">
-            <input id="input-inicio" type="date"  min="2026-02-02" />
-            <input id="input-fim" type="date"  min="2026-02-02" />
+            <input id="input-inicio" type="date" min="2026-02-02" />
+            <input id="input-fim" type="date" min="2026-02-02" />
           </div>
           <div class="row">
-            <button id="btn-confirmar-periodo" type="button" >CONFIRMAR</button>
-            <button id="btn-cancelar-periodo" type="button" >CANCELAR</button>
+            <button id="btn-confirmar-periodo" type="button">CONFIRMAR</button>
+            <button id="btn-cancelar-periodo" type="button">CANCELAR</button>
           </div>
           <div id="msg-periodo" class="msg"></div>
         </div>
@@ -232,6 +232,7 @@
       const boxHoje = document.getElementById("box-hoje");
       const boxPeriodo = document.getElementById("box-periodo");
       const msgPeriodo = document.getElementById("msg-periodo");
+      const warnBox = document.getElementById("warn-box");
     
       const inputInicio = document.getElementById("input-inicio");
       const inputFim = document.getElementById("input-fim");
@@ -248,11 +249,13 @@
       document.getElementById("btn-hoje").onclick = () => {
         hideAll();
         boxHoje.style.display = "block";
+        if (warnBox) warnBox.style.display = "none";
       };
     
       document.getElementById("btn-periodo").onclick = () => {
         hideAll();
         boxPeriodo.style.display = "block";
+        if (warnBox) warnBox.style.display = "none";
       };
     
       document.getElementById("btn-confirmar-hoje").onclick = () => {
@@ -306,7 +309,7 @@
                   title: "IMPRIMIR",
                   url: modalUrl,
                   maxWidth: "580px",
-                  height: "488px",
+                  height: "400px",
 
                   callback: async (ret) => {
                     console.log("RETORNO MODAL:", ret);
@@ -343,12 +346,7 @@
 
                     try {
 
-                      const webhookUrl = N8N_WEBHOOK_URL;
-
-                      console.log("WEBHOOK ESCOLHIDO:", webhookUrl);
-
-                      const resposta = await chamarN8n(payload, webhookUrl);
-                     
+                      const resposta = await chamarN8n(payload, N8N_WEBHOOK_URL);
                       imprimirTexto(resposta);
 
                       window.WlExtension.alert({
@@ -363,7 +361,6 @@
                       });
                     }
                   }
-
                 });
               }
             }
@@ -381,4 +378,4 @@
 
 </body>
 
-</html> 
+</html>
